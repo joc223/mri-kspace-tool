@@ -10,7 +10,6 @@ hide_menu_style = """
         <style>
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
-        header {visibility: hidden;}
         .stAppDeployButton {display:none;}
         </style>
         """
