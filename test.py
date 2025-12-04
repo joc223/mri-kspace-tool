@@ -1,69 +1,120 @@
+import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
-def visualize_kspace_point_centered(matrix_size, kx, ky):
-    """
-    視覺化特定 K-space 點對應的空間頻率圖案 (修正為以中心為原點)。
-    """
-    
-    # --- 修正點：座標從 -0.5 到 0.5，這樣 (0,0) 就會在圖片正中心 ---
-    x = np.linspace(-0.5, 0.5, matrix_size)
-    y = np.linspace(-0.5, 0.5, matrix_size) # 注意這裡Y軸方向可能因繪圖庫習慣而異，通常需注意上下翻轉
-    
-    # 建立網格
+# 1. 網頁基本設定
+st.set_page_config(page_title="MRI K-space 原理模擬", layout="wide")
+
+# 2. 【隱藏程式碼與選單】的 CSS 語法
+# 這會隱藏右上角的漢堡選單、右下角的 Deploy 按鈕以及頁尾
+hide_menu_style = """
+        <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        .stAppDeployButton {display:none;}
+        </style>
+        """
+st.markdown(hide_menu_style, unsafe_allow_html=True)
+
+# 3. 標題與說明
+st.title("🧲 MRI K-space 原理互動模擬器")
+st.markdown("""
+透過此工具觀察 **K-space (空間頻率)** 上的點如何對應到 **影像空間 (Image Space)** 的條紋圖案。
+* **$k_x, k_y$**：代表在 X 或 Y 方向上，一個 FOV 內變化的週期數。
+* **中心點**：座標 (0,0) 代表直流分量 (DC)，訊號最強且恆定。
+""")
+
+# --- 側邊欄：參數設定 ---
+st.sidebar.header("參數設定 (Parameters)")
+
+# 矩陣大小
+matrix_size = st.sidebar.selectbox(
+    "1. 選擇矩陣大小 (Matrix Size)",
+    options=[32, 64, 128, 256, 512],
+    index=2 # 預設 128
+)
+
+st.sidebar.write("---")
+
+# kx, ky 滑桿
+st.sidebar.subheader("2. 調整 K-space 座標")
+kx = st.sidebar.slider("kx (X 方向週期數)", min_value=-10, max_value=10, value=1, step=1)
+ky = st.sidebar.slider("ky (Y 方向週期數)", min_value=-10, max_value=10, value=0, step=1)
+
+# --- 核心運算 (修正為中心原點) ---
+def generate_centered_pattern(size, k_x, k_y):
+    # 建立從 -0.5 到 0.5 的網格
+    # 這樣 (0,0) 就會在矩陣的正中心
+    x = np.linspace(-0.5, 0.5, size)
+    y = np.linspace(-0.5, 0.5, size)
     X, Y = np.meshgrid(x, y)
-
-    # 計算波形圖案 (這次中心點 x=0, y=0 時，cos(0)=1，會是白色)
-    spatial_pattern = np.cos(2 * np.pi * (kx * X + ky * Y))
-
-    # 繪圖設定
-    fig = plt.figure(figsize=(14, 6))
-
-    # --- 左圖：2D 空間頻率影像 ---
-    ax1 = fig.add_subplot(1, 2, 1)
-    # origin='lower' 確保 y軸方向符合直覺 (-0.5 在下, 0.5 在上)
-    im = ax1.imshow(spatial_pattern, cmap='gray', extent=[-0.5, 0.5, -0.5, 0.5], vmin=-1, vmax=1, origin='lower')
-    ax1.set_title(f'Image Pattern (Centered Origin)\n$k_x$={kx}, $k_y$={ky}', fontsize=14)
-    ax1.set_xlabel('X position (FOV)', fontsize=12)
-    ax1.set_ylabel('Y position (FOV)', fontsize=12)
     
-    # 標示出中心點
-    ax1.scatter([0], [0], color='red', marker='+', s=100, label='Isocenter')
+    # 計算波形: cos(2 * pi * (kx*x + ky*y))
+    # 當 x=0, y=0 時，cos(0) = 1 (白色)，符合講義描述
+    pattern = np.cos(2 * np.pi * (k_x * X + k_y * Y))
+    return pattern, x, y
+
+spatial_pattern, x_axis, y_axis = generate_centered_pattern(matrix_size, kx, ky)
+
+# --- 繪圖區域 ---
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    st.subheader("🖼️ 空間域影像 (Image Pattern)")
+    fig1, ax1 = plt.subplots(figsize=(6, 6))
+    
+    # 顯示影像 (origin='lower' 讓 Y軸由下往上增加)
+    im = ax1.imshow(spatial_pattern, cmap='gray', 
+                    extent=[-0.5, 0.5, -0.5, 0.5], 
+                    vmin=-1, vmax=1, origin='lower')
+    
+    # 標示中心點
+    ax1.scatter([0], [0], color='red', marker='+', s=100, linewidth=2, label='Isocenter')
+    
+    ax1.set_title(f"K-space 座標: ($k_x$={kx}, $k_y$={ky})", fontsize=14)
+    ax1.set_xlabel("X 位置 (FOV)")
+    ax1.set_ylabel("Y 位置 (FOV)")
     ax1.legend(loc='upper right')
-    plt.colorbar(im, ax=ax1, label='Signal Amplitude')
+    plt.colorbar(im, ax=ax1, label='訊號強度', fraction=0.046, pad=0.04)
+    st.pyplot(fig1)
 
-    # --- 右圖：1D 剖面圖 ---
-    ax2 = fig.add_subplot(1, 2, 2)
+with col2:
+    st.subheader("📈 1D 波形剖面 (Waveform)")
+    fig2, ax2 = plt.subplots(figsize=(6, 4))
     
-    # 沿著波傳遞方向畫剖面
+    # 計算合成頻率
     k_magnitude = np.sqrt(kx**2 + ky**2)
-    t = np.linspace(-0.5, 0.5, 1000) # 這裡也改為從中心對稱
+    
+    # 產生高解析度座標畫波形
+    t = np.linspace(-0.5, 0.5, 600)
     
     if k_magnitude == 0:
         waveform = np.ones_like(t)
+        info_text = "直流分量 (全亮)"
     else:
         waveform = np.cos(2 * np.pi * k_magnitude * t)
+        info_text = f"頻率: {k_magnitude:.2f} cycles/FOV"
 
-    ax2.plot(t, waveform, color='blue', linewidth=2)
-    ax2.set_title('1D Waveform Profile (Centered)', fontsize=14)
-    ax2.set_xlabel('Position (0 is Center)', fontsize=12)
-    ax2.set_ylabel('Amplitude', fontsize=12)
-    ax2.set_ylim(-1.5, 1.5)
-    ax2.grid(True, linestyle='--', alpha=0.7)
+    ax2.plot(t, waveform, color='#1f77b4', linewidth=2)
     
-    # 畫一條中心線輔助觀察
-    ax2.axvline(x=0, color='red', linestyle='--', alpha=0.5, label='Center (x=0)')
+    # 標示中心線
+    ax2.axvline(0, color='red', linestyle='--', alpha=0.6, label='Center (x=0)')
+    
+    ax2.set_ylim(-1.5, 1.5)
+    ax2.set_xlim(-0.5, 0.5)
+    ax2.set_xlabel("沿波傳遞方向的位置")
+    ax2.set_ylabel("振幅")
+    ax2.set_title(f"波形變化 ({info_text})")
+    ax2.grid(True, linestyle=':', alpha=0.6)
     ax2.legend()
+    st.pyplot(fig2)
 
-    plt.tight_layout()
-    plt.show()
-
-# ==========================================
-# 測試修正後的結果
-# ==========================================
-
-# 範例：現在 kx=1, ky=0，中心點應該會是「白色」(波峰)
-visualize_kspace_point_centered(matrix_size=128, kx=1, ky=0)
-
-# # 範例：kx=2, ky=4
-# visualize_kspace_point_centered(matrix_size=128, kx=2, ky=4)
+    # 文字說明區
+    st.info(f"""
+    **觀察重點：**
+    * 目前 K-space 點選在 **$k_x={kx}, k_y={ky}$**。
+    * 這代表在影像視野中，存在 **X方向 {abs(kx)} 個週期** 與 **Y方向 {abs(ky)} 個週期** 的變化。
+    * 請看紅色中心線，該處訊號強度為 **{waveform[len(t)//2]:.1f}** (1.0 代表全白)，這驗證了中心點相位一致的特性。
+    """)
+    
