@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 1. 網頁基本設定
-st.set_page_config(page_title="MRI K-space Simulator", layout="wide")
+st.set_page_config(page_title="MRI K-space Simulator")
 
 # 2. 【核彈級隱藏 CSS】
 # 因為我們把控制項移到中間了，所以可以放心地把整條 Header 藏起來！
@@ -26,7 +26,7 @@ hide_all_style = """
 st.markdown(hide_all_style, unsafe_allow_html=True)
 
 # 3. 標題與說明
-st.title(" MRI K-space 原理互動模擬器")
+st.title(" MRI K-space 原理模擬器")
 st.markdown("""
 **K-space (空間頻率)** 與 **影像空間 (Image Space)** 的對應關係觀察：
 * **中心點 (0,0)**：代表直流分量 (DC)，訊號最強。
@@ -40,7 +40,7 @@ st.write("---") # 分隔線
 c1, c2, c3 = st.columns([1, 1, 1])
 
 with c1:
-    st.subheader("1. 設定大小")
+    st.subheader("1. 設定矩陣大小")
     matrix_size = st.selectbox(
         "矩陣大小 (Matrix Size)",
         options=[16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
@@ -71,8 +71,8 @@ spatial_pattern, x_axis, y_axis = generate_centered_pattern(matrix_size, kx, ky)
 col_left, col_right = st.columns([1, 1])
 
 with col_left:
-    st.subheader(" 空間域影像 (Image Pattern)")
-    fig1, ax1 = plt.subplots(figsize=(6, 6))
+    st.subheader("影像變化（亮暗條紋變化）")
+    fig1, ax1 = plt.subplots(figsize=(5, 5))
     
     im = ax1.imshow(spatial_pattern, cmap='gray', 
                     extent=[-0.5, 0.5, -0.5, 0.5], 
@@ -81,8 +81,8 @@ with col_left:
     
     # 英文標籤 (防亂碼)
     ax1.set_title(f"K-space Point: (kx={kx}, ky={ky})", fontsize=14)
-    ax1.set_xlabel("X Position (FOV)", fontsize=12)
-    ax1.set_ylabel("Y Position (FOV)", fontsize=12)
+    ax1.set_xlabel("X", fontsize=12)
+    ax1.set_ylabel("Y", fontsize=12)
     ax1.legend(loc='upper right')
     
     cbar = plt.colorbar(im, ax=ax1, fraction=0.046, pad=0.04)
@@ -90,8 +90,8 @@ with col_left:
     st.pyplot(fig1)
 
 with col_right:
-    st.subheader(" 1D 波形剖面 (Waveform)")
-    fig2, ax2 = plt.subplots(figsize=(6, 4))
+    st.subheader("1D 波形剖面")
+    fig2, ax2 = plt.subplots(figsize=(5, 3))
     
     k_magnitude = np.sqrt(kx**2 + ky**2)
     t = np.linspace(-0.5, 0.5, 600)
@@ -101,7 +101,7 @@ with col_right:
         info_text = "DC Component (Constant)"
     else:
         waveform = np.cos(2 * np.pi * k_magnitude * t)
-        info_text = f"Freq: {k_magnitude:.2f} cycles/FOV"
+        info_text = f"Freq: {k_magnitude:.2f} cycles"
 
     ax2.plot(t, waveform, color='#1f77b4', linewidth=2)
     ax2.axvline(0, color='red', linestyle='--', alpha=0.6, label='Center (x=0)')
