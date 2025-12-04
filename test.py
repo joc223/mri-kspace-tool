@@ -138,7 +138,6 @@ with col_left:
     st.pyplot(fig1)
     
     # 【新增備註 1】解釋 kx, ky 意義
-    st.info()
     st.info("""
     f"現在是 **kx={kx}, ky={ky}**，
             也就代表在 X 方向有 **{abs(kx)}** 個週期的亮暗條紋變化，
