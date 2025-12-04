@@ -17,7 +17,7 @@ hide_menu_style = """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
 
 # 3. 標題與說明 (網頁介面保留中文，同學比較親切)
-st.title("🧲 MRI K-space 原理互動模擬器")
+st.title(" MRI K-space 原理互動模擬器")
 st.markdown("""
 透過此工具觀察 **K-space (空間頻率)** 上的點如何對應到 **影像空間 (Image Space)** 的條紋圖案。
 * **$k_x, k_y$**：代表在 X 或 Y 方向上，一個 FOV 內變化的週期數。
@@ -60,7 +60,7 @@ spatial_pattern, x_axis, y_axis = generate_centered_pattern(matrix_size, kx, ky)
 col1, col2 = st.columns([1, 1])
 
 with col1:
-    st.subheader("🖼️ 空間域影像 (Image Pattern)")
+    st.subheader(" 空間域影像 (Image Pattern)")
     fig1, ax1 = plt.subplots(figsize=(6, 6))
     
     # 顯示影像 (origin='lower' 讓 Y軸由下往上增加)
@@ -84,7 +84,7 @@ with col1:
     st.pyplot(fig1)
 
 with col2:
-    st.subheader("📈 1D 波形剖面 (Waveform)")
+    st.subheader(" 1D 波形剖面 (Waveform)")
     fig2, ax2 = plt.subplots(figsize=(6, 4))
     
     # 計算合成頻率
@@ -123,4 +123,3 @@ with col2:
     * 這代表在影像視野中，存在 **X方向 {abs(kx)} 個週期** 與 **Y方向 {abs(ky)} 個週期** 的變化。
     * 請看紅色中心線，該處訊號強度為 **{waveform[len(t)//2]:.1f}** (1.0 代表全白)，這驗證了中心點相位一致的特性。
     """)
-    
