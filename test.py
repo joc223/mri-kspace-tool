@@ -47,11 +47,11 @@ with c1:
 
 with c2:
     st.subheader("2. 調整 X 頻率")
-    kx = st.slider("kx (X 方向週期數)", min_value=-10, max_value=10, value=1, step=1)
+    kx = st.slider("kx (可當作頻率編碼)", min_value=-10, max_value=10, value=1, step=1)
 
 with c3:
     st.subheader("3. 調整 Y 頻率")
-    ky = st.slider("ky (Y 方向週期數)", min_value=-10, max_value=10, value=0, step=1)
+    ky = st.slider("ky (可當作相位編碼)", min_value=-10, max_value=10, value=0, step=1)
 
 st.write("---")
 
@@ -121,7 +121,7 @@ col_left, col_right = st.columns([1, 1])
 
 with col_left:
     st.subheader("影像變化")
-    fig1, ax1 = plt.subplots(figsize=(5, 5))
+    fig1, ax1 = plt.subplots(figsize=(6, 6))
     
     im = ax1.imshow(spatial_pattern, cmap='gray', 
                     extent=[-0.5, 0.5, -0.5, 0.5], 
@@ -137,17 +137,16 @@ with col_left:
     cbar.set_label('Signal Intensity', rotation=270, labelpad=15)
     st.pyplot(fig1)
     
-    # 【新增備註 1】解釋 kx, ky 意義
-    st.info("""
-    f"現在是 **kx={kx}, ky={ky}**，
-            也就代表在 X 方向有 **{abs(kx)}** 個週期的亮暗條紋變化，
-            而 Y 方向有 **{abs(ky)}** 個週期的亮暗條紋變化。"
+# 【新增備註 1】解釋 kx, ky 意義
+    st.info(f"""
+    **現在是 $k_x={kx}, k_y={ky}$**
+    這代表在 X 方向有 **{abs(kx)}** 個週期的亮暗條紋變化，
+    而 Y 方向有 **{abs(ky)}** 個週期的亮暗條紋變化。
     """)
-
 
 with col_right:
     st.subheader("1D 波形剖面")
-    fig2, ax2 = plt.subplots(figsize=(5, 3))
+    fig2, ax2 = plt.subplots(figsize=(6, 4))
     
     k_magnitude = np.sqrt(kx**2 + ky**2)
     t = np.linspace(-0.5, 0.5, 600)
@@ -174,8 +173,9 @@ with col_right:
     # 【新增備註 2】解釋波形為何不斜
     st.info("""
     **為什麼波形不是斜的？**
-    這張圖顯示的是**「訊號強度 (Amplitude)」**的變化，而非空間幾何形狀。
-    無論左圖的條紋是直的、橫的或斜的，沿著波傳遞方向切開來看，其亮暗強度的變化（由白變黑再變白）永遠呈現上下震盪的正弦波形。
+    這張圖顯示的是**訊號強度 (Amplitude)**的變化，而非空間幾何形狀。
+    無論左圖的條紋是直的、橫的或斜的，沿著波傳遞方向切開來看，
+    其亮暗強度的變化（由白變黑再變白）永遠呈現上下震盪的正弦波形。
     """)
 
 # 底部總結 (保留原本的觀察重點)
