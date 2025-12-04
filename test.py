@@ -77,7 +77,7 @@ with col_left:
     im = ax1.imshow(spatial_pattern, cmap='gray', 
                     extent=[-0.5, 0.5, -0.5, 0.5], 
                     vmin=-1, vmax=1, origin='lower')
-    ax1.scatter([0], [0], color='red', marker='+', s=100, linewidth=2, label='Isocenter')
+    ax1.scatter([0], [0], color='red', marker='+', s=100, linewidth=2, label='coordinate center')
     
     # 英文標籤 (防亂碼)
     ax1.set_title(f"K-space Point: (kx={kx}, ky={ky})", fontsize=14)
