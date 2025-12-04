@@ -8,9 +8,17 @@ st.set_page_config(page_title="MRI K-space Simulator", layout="wide")
 # 2. 【隱藏程式碼與選單】的 CSS 語法
 hide_menu_style = """
         <style>
+        /* 1. 隱藏右上角的漢堡選單 (三點)，這樣別人就無法點擊 'View Source' */
         #MainMenu {visibility: hidden;}
+        
+        /* 2. 隱藏右下角的 Footer (Made with Streamlit) */
         footer {visibility: hidden;}
-        .stAppDeployButton {display:none;}
+        
+        /* 3. 隱藏 Deploy / Manage app 按鈕 */
+        .stAppDeployButton {display: none;}
+        
+        /* 4. 關鍵：保留 Header，但讓它看起來不顯眼，確保側邊欄開關還在 */
+        /* header {visibility: hidden;}  <-- 這行千萬不要加，加了箭頭就會不見 */
         </style>
         """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
