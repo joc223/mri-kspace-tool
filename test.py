@@ -28,7 +28,7 @@ st.markdown(hide_all_style, unsafe_allow_html=True)
 st.title("MRI K-space 原理模擬器")
 st.markdown("""
 **K-space (空間頻率)** 與 **影像空間 (Image Space)** 的對應關係觀察：
-* **中心點 (0,0)**：代表直流分量 (DC)，訊號最強。
+* **中心點 (coordinate center)**：為kx = 0, ky = 0 時，訊號最強。
 * **$k_x, k_y$**：代表在 X 或 Y 方向上的頻率變化（週期數）。
 """)
 
