@@ -31,7 +31,7 @@ st.sidebar.header("1. 參數設定 (Parameters)")
 # 矩陣大小
 matrix_size = st.sidebar.selectbox(
     "選擇矩陣大小 (Matrix Size)",
-    options=[16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192],
+    options=[16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
     index=3 # 預設 128
 )
 
