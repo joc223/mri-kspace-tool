@@ -5,51 +5,59 @@ import matplotlib.pyplot as plt
 # 1. 網頁基本設定
 st.set_page_config(page_title="MRI K-space Simulator", layout="wide")
 
-# 2. 【最終防禦版 CSS】
-hide_css = """
+# 2. 【核彈級隱藏 CSS】
+# 因為我們把控制項移到中間了，所以可以放心地把整條 Header 藏起來！
+hide_all_style = """
 <style>
-    /* 1. 隱藏右上角的三點選單 (別人無法按 View Source) */
-    #MainMenu {visibility: hidden;}
-    [data-testid="stToolbar"] {visibility: hidden;}
+    /* 隱藏頂部 Header (包含 Manage app 按鈕、漢堡選單、側邊欄箭頭) */
+    header {visibility: hidden;}
     
-    /* 2. 隱藏頁尾的 Made with Streamlit */
+    /* 隱藏右上角的三點選單 */
+    #MainMenu {visibility: hidden;}
+    
+    /* 隱藏頁尾 */
     footer {visibility: hidden;}
     
-    /* 3. 隱藏右下角的 Manage App 按鈕 (這對訪客有效) */
+    /* 雙重保險：隱藏 Manage App 按鈕 */
     .stAppDeployButton {display: none;}
     [data-testid="stManageAppButton"] {display: none;}
-    
-    /* 4. 針對 Embed 模式底下的 Bar 也強制隱藏 (以防萬一) */
-    .viewerBadge_container__1QSob {display: none;}
 </style>
 """
-st.markdown(hide_css, unsafe_allow_html=True)
+st.markdown(hide_all_style, unsafe_allow_html=True)
 
 # 3. 標題與說明
 st.title(" MRI K-space 原理互動模擬器")
 st.markdown("""
-**操作說明：**
-* 請展開左側選單調整 **$k_x$** 與 **$k_y$**。
-* **左圖**：顯示 K-space 該點對應的 **空間條紋 (Spatial Pattern)**。
-* **右圖**：顯示沿著波傳遞方向的 **1D 波形 (Waveform)**。
+**K-space (空間頻率)** 與 **影像空間 (Image Space)** 的對應關係觀察：
+* **中心點 (0,0)**：代表直流分量 (DC)，訊號最強。
+* **$k_x, k_y$**：代表在 X 或 Y 方向上的頻率變化（週期數）。
 """)
 
-# --- 側邊欄 ---
-st.sidebar.header("1. 參數設定 (Parameters)")
+st.write("---") # 分隔線
 
-matrix_size = st.sidebar.selectbox(
-    "選擇矩陣大小 (Matrix Size)",
-    options=[16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
-    index=3
-)
+# --- 4. 參數控制區 (移到主畫面最上方) ---
+# 使用 st.columns 將控制項橫向排列
+c1, c2, c3 = st.columns([1, 1, 1])
 
-st.sidebar.write("---")
+with c1:
+    st.subheader("1. 設定大小")
+    matrix_size = st.selectbox(
+        "矩陣大小 (Matrix Size)",
+        options=[16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
+        index=3
+    )
 
-st.sidebar.subheader("2. 調整 K-space 座標")
-kx = st.sidebar.slider("kx (X 方向週期數)", min_value=-10, max_value=10, value=1, step=1)
-ky = st.sidebar.slider("ky (Y 方向週期數)", min_value=-10, max_value=10, value=0, step=1)
+with c2:
+    st.subheader("2. 調整 X 頻率")
+    kx = st.slider("kx (X 方向週期數)", min_value=-10, max_value=10, value=1, step=1)
 
-# --- 核心運算 ---
+with c3:
+    st.subheader("3. 調整 Y 頻率")
+    ky = st.slider("ky (Y 方向週期數)", min_value=-10, max_value=10, value=0, step=1)
+
+st.write("---") # 分隔線
+
+# --- 5. 核心運算 ---
 def generate_centered_pattern(size, k_x, k_y):
     x = np.linspace(-0.5, 0.5, size)
     y = np.linspace(-0.5, 0.5, size)
@@ -59,12 +67,13 @@ def generate_centered_pattern(size, k_x, k_y):
 
 spatial_pattern, x_axis, y_axis = generate_centered_pattern(matrix_size, kx, ky)
 
-# --- 繪圖 ---
-col1, col2 = st.columns([1, 1])
+# --- 6. 繪圖區域 ---
+col_left, col_right = st.columns([1, 1])
 
-with col1:
+with col_left:
     st.subheader(" 空間域影像 (Image Pattern)")
     fig1, ax1 = plt.subplots(figsize=(6, 6))
+    
     im = ax1.imshow(spatial_pattern, cmap='gray', 
                     extent=[-0.5, 0.5, -0.5, 0.5], 
                     vmin=-1, vmax=1, origin='lower')
@@ -75,13 +84,15 @@ with col1:
     ax1.set_xlabel("X Position (FOV)", fontsize=12)
     ax1.set_ylabel("Y Position (FOV)", fontsize=12)
     ax1.legend(loc='upper right')
+    
     cbar = plt.colorbar(im, ax=ax1, fraction=0.046, pad=0.04)
     cbar.set_label('Signal Intensity', rotation=270, labelpad=15)
     st.pyplot(fig1)
 
-with col2:
+with col_right:
     st.subheader(" 1D 波形剖面 (Waveform)")
     fig2, ax2 = plt.subplots(figsize=(6, 4))
+    
     k_magnitude = np.sqrt(kx**2 + ky**2)
     t = np.linspace(-0.5, 0.5, 600)
     
@@ -96,6 +107,7 @@ with col2:
     ax2.axvline(0, color='red', linestyle='--', alpha=0.6, label='Center (x=0)')
     ax2.set_ylim(-1.5, 1.5)
     ax2.set_xlim(-0.5, 0.5)
+    
     ax2.set_xlabel("Position along wave direction", fontsize=12)
     ax2.set_ylabel("Amplitude", fontsize=12)
     ax2.set_title(f"Waveform Profile ({info_text})", fontsize=14)
@@ -103,9 +115,10 @@ with col2:
     ax2.legend()
     st.pyplot(fig2)
 
+    # 底部說明
     st.info(f"""
     **觀察重點：**
-    * 目前 K-space 點選在 **$k_x={kx}, k_y={ky}$**。
-    * 這代表在影像視野中，存在 **X方向 {abs(kx)} 個週期** 與 **Y方向 {abs(ky)} 個週期** 的變化。
-    * 請看紅色中心線，該處訊號強度為 **{waveform[len(t)//2]:.1f}** (1.0 代表全白)，這驗證了中心點相位一致的特性。
+    * 目前 K-space 座標： **$k_x={kx}, k_y={ky}$**
+    * **左圖**：顯示在影像視野 (FOV) 中，X 方向有 **{abs(kx)}** 個週期，Y 方向有 **{abs(ky)}** 個週期。
+    * **右圖**：顯示該頻率的實際正弦波形。中心點 (紅色虛線) 永遠是波峰 (強度=1)，代表相位一致。
     """)
