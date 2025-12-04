@@ -150,7 +150,7 @@ with col_right:
     
     if k_magnitude == 0:
         waveform = np.ones_like(t)
-        info_text = "DC Component"
+        info_text = "((kx = 0, ky = 0))"
     else:
         waveform = np.cos(2 * np.pi * k_magnitude * t)
         info_text = f"Freq: {k_magnitude:.2f}"
@@ -170,7 +170,7 @@ with col_right:
 # 底部說明
 st.info(f"""
 **觀察重點：**
-* 目前 K-space 座標： **$k_x={kx}, k_y={ky}$**
+*目前 K-space 座標： **$k_x={kx}, k_y={ky}$**
 1. **上方黑底圖**：黃色點點代表 K-space 網格，**紅色點**代表目前位置。
 2. **左圖 (影像)**：顯示對應的空間頻率條紋。
 3. **右圖 (波形)**：顯示該條紋的波形變化。
