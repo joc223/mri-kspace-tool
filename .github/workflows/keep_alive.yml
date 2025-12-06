@@ -1,0 +1,14 @@
+name: Keep Streamlit App Alive
+
+on:
+  schedule:
+    # 每 30 分鐘執行一次
+    - cron: "*/30 * * * *"
+  workflow_dispatch: # 讓您可以手動按按鈕測試
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Streamlit App
+        run: curl https://mri-kspace-csmumirs1298002wcy.streamlit.app
