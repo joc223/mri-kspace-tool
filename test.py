@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
-# 1. 網頁基本設定
+# 1. 網頁基本設定 (移除 layout="wide" 以適配手機)
 st.set_page_config(page_title="MRI K-space Simulator")
 
 # 2. 【核彈級隱藏 CSS】
@@ -28,7 +28,7 @@ st.markdown(hide_all_style, unsafe_allow_html=True)
 st.title("MRI K-space 原理模擬器")
 st.markdown("""
 **K-space (空間頻率)** 與 **影像空間 (Image Space)** 的對應關係觀察：
-* **中心點 (coordinate center)**：為kx = 0, ky = 0 時，訊號最強。
+* **中心點 (coordinate center)**：為 kx=0, ky=0 時，訊號最強。
 * **$k_x, k_y$**：代表在 X 或 Y 方向上的頻率變化（週期數）。
 """)
 
@@ -47,11 +47,11 @@ with c1:
 
 with c2:
     st.subheader("2. 調整 X 頻率")
-    kx = st.slider("kx (可當作頻率編碼)", min_value=-10, max_value=10, value=1, step=1)
+    kx = st.slider("kx (X 方向週期數)", min_value=-10, max_value=10, value=1, step=1)
 
 with c3:
     st.subheader("3. 調整 Y 頻率")
-    ky = st.slider("ky (可當作相位編碼)", min_value=-10, max_value=10, value=0, step=1)
+    ky = st.slider("ky (Y 方向週期數)", min_value=-10, max_value=10, value=0, step=1)
 
 st.write("---")
 
@@ -61,6 +61,7 @@ st.subheader(f"K-space 當前位置示意圖 (Matrix: {matrix_size}x{matrix_size
 def plot_kspace_grid(k_x, k_y, size):
     fig, ax = plt.subplots(figsize=(6, 4))
     
+    # 限制顯示範圍 (Zoom in)
     display_limit = 10
     
     grid_x, grid_y = np.meshgrid(np.arange(-display_limit, display_limit+1), 
@@ -97,11 +98,8 @@ st.pyplot(plot_kspace_grid(kx, ky, matrix_size))
 
 # 黃色點點備註
 st.warning("""
-**備註：**
-如果在手機或電腦螢幕上，真的把 128x128 (甚至 4096) 個黃色點點全部畫出來，
-           它們會擠在一起變成一塊「實心的黃色方塊」，
-           會完全看不出「網格」的感覺，因此僅畫到 21x21 作為示意，
-           **絕對完全並非作者本人偷懶**。
+**💡 備註：**
+如果在手機或電腦螢幕上，真的把 128x128 (甚至 4096) 個黃色點點全部畫出來，它們會擠在一起變成一塊「實心的黃色方塊」，會完全看不出「網格」的感覺，因此僅畫到 21x21 的中心區域示意，**絕對完全並非作者本人偷懶**。
 """)
 
 st.write("---")
@@ -137,7 +135,7 @@ with col_left:
     cbar.set_label('Signal Intensity', rotation=270, labelpad=15)
     st.pyplot(fig1)
     
-# 【新增備註 1】解釋 kx, ky 意義
+    # 【備註 1】解釋 kx, ky
     st.info(f"""
     **現在是 $k_x={kx}, k_y={ky}$**
     這代表在 X 方向有 **{abs(kx)}** 個週期的亮暗條紋變化，
@@ -146,14 +144,14 @@ with col_left:
 
 with col_right:
     st.subheader("1D 波形剖面")
-    fig2, ax2 = plt.subplots(figsize=(6, 4))
+    fig2, ax2 = plt.subplots(figsize=(6, 4)) # 高度稍微調高，視覺平衡
     
     k_magnitude = np.sqrt(kx**2 + ky**2)
     t = np.linspace(-0.5, 0.5, 600)
     
     if k_magnitude == 0:
         waveform = np.ones_like(t)
-        info_text = "((kx = 0, ky = 0))"
+        info_text = "DC Component (Constant)"
     else:
         waveform = np.cos(2 * np.pi * k_magnitude * t)
         info_text = f"Freq: {k_magnitude:.2f}"
@@ -170,15 +168,14 @@ with col_right:
     ax2.legend(fontsize='small')
     st.pyplot(fig2)
     
-    # 【新增備註 2】解釋波形為何不斜
+    # 【備註 2】解釋波形為何不斜
     st.info("""
-    **為什麼波形不是斜的？**
+    **💡 為什麼波形不是斜的？**
     這張圖顯示的是 **訊號強度 (Amplitude)** 的變化，而非空間幾何形狀。
-    無論左圖的條紋是直的、橫的或斜的，沿著波傳遞方向切開來看，
-    其亮暗強度的變化（由白變黑再變白）永遠呈現上下震盪的正弦波形。
+    無論左圖的條紋是直的、橫的或斜的，沿著波傳遞方向切開來看，其亮暗強度的變化（由白變黑再變白）永遠呈現上下震盪的正弦波形。
     """)
 
-# 底部總結 (保留原本的觀察重點)
+# 底部總結
 st.success("""
 **總結觀察重點：**
 1. **上方黑底圖**：顯示您目前在 K-space 的取樣位置（紅色點）。
