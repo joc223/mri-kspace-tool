@@ -186,3 +186,77 @@ st.success("""
 3. **右圖 (波形)**：顯示該頻率的實際震盪情形。中心點 (紅色虛線) 永遠是波峰，代表相位一致。
 """)
 
+
+# --- 新增區塊：相位編碼原理教學 ---
+st.write("---")
+st.header("🧲 進階原理：為什麼會有相位差？")
+
+with st.expander("點擊展開：互動式相位編碼教學 (Phase Encoding Demo)"):
+    st.write("""
+    這張圖模擬了 **梯度磁場 ($G_y$)** 如何讓不同位置的質子產生相位差。
+    * **梯度強**：相位捲得比較緊（頻率高）。
+    * **梯度弱**：相位捲得比較鬆（頻率低）。
+    """)
+    
+    # 控制項
+    gradient_strength = st.slider("調整梯度強度 ($G_y$)", -5.0, 5.0, 1.0, step=0.5)
+    
+    # 畫圖
+    fig_phase, (ax_grad, ax_spins) = plt.subplots(2, 1, figsize=(8, 5), gridspec_kw={'height_ratios': [1, 1]})
+    
+    # 1. 上圖：梯度磁場示意
+    y_pos = np.linspace(-1, 1, 21) # 21個位置
+    field_strength = gradient_strength * y_pos # 磁場強度線性變化
+    
+    ax_grad.plot(y_pos, field_strength, color='lime', linewidth=2, label='Gradient Field')
+    ax_grad.axhline(0, color='white', linestyle='--')
+    
+    # 畫箭頭表示磁場強弱
+    for y, f in zip(y_pos[::2], field_strength[::2]): # 每隔一點畫一個箭頭
+        ax_grad.arrow(y, 0, 0, f, head_width=0.05, head_length=0.2, fc='lime', ec='lime')
+
+    ax_grad.set_facecolor('black')
+    ax_grad.set_title(f"Gradient Field Strength (Slope = {gradient_strength})", color='white')
+    ax_grad.set_ylabel("Field Strength", color='white')
+    ax_grad.tick_params(colors='white')
+    ax_grad.set_ylim(-6, 6)
+    
+    # 2. 下圖：磁矩相位 (圓圈指針)
+    ax_spins.set_facecolor('black')
+    ax_spins.set_xlim(-1.2, 1.2)
+    ax_spins.set_ylim(-0.5, 0.5)
+    ax_spins.axis('off') # 隱藏座標軸
+    
+    # 畫出一排圓圈和指針
+    for i, y in enumerate(y_pos):
+        # 相位角 = 梯度 * 位置 * 常數
+        phase_angle = -gradient_strength * y * np.pi 
+        
+        # 圓圈中心位置
+        center_x = y
+        center_y = 0
+        
+        # 畫圓圈外框
+        circle = plt.Circle((center_x, center_y), 0.04, color='gray', fill=False)
+        ax_spins.add_artist(circle)
+        
+        # 畫黃色指針
+        dx = 0.04 * np.sin(phase_angle)
+        dy = 0.04 * np.cos(phase_angle)
+        ax_spins.arrow(center_x, center_y, dx, dy, head_width=0.0, color='yellow', width=0.005)
+
+    ax_spins.set_title("Spin Phase (Yellow Arrows)", color='white')
+    
+    # 設定整張圖背景
+    fig_phase.patch.set_facecolor('black')
+    
+    st.pyplot(fig_phase)
+    
+    st.info("""
+    **觀察重點：**
+    試著拉動滑桿，您會發現：
+    1. 當 **梯度=0** 時，所有黃色指針都指向上方（相位一致）。
+    2. 當 **梯度變大** 時，左右兩邊的指針偏轉角度變大，形成一個螺旋波形。這就是 K-space 中 $k_y$ 數值變大的物理意義。
+    """)
+
+    
