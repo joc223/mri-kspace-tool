@@ -193,17 +193,17 @@ with tab_theory:
     with st.expander("點擊展開：互動式相位編碼教學 (Phase Encoding Demo)", expanded=True):
         st.write("""
         **原理說明：**
-        這張圖模擬了 **梯度磁場 ($G_y$)** 如何讓不同位置的質子產生相位差，並對應到訊號強度波形。
+        這張圖模擬了 **梯度磁場 ($G_y$)** 如何讓不同位置的質子產生相位差，並對應到訊號強度。
         * **上圖 (梯度)**：顯示施加的磁場梯度斜率。
-        * **中圖 (信號大小)**：顯示對應的訊號強度變化 (Cosine 波形)。
-        * **下圖 (相位角)**：顯示質子磁矩的旋轉角度。
+        * **中圖 (相角)**：顯示質子磁矩的旋轉方向。
+        * **下圖 (信號大小)**：顯示該相角在垂直方向的**投影量 (Projection)**，也就是我們實際收到的信號強度。
         """)
         
         pe_gradient = st.slider("調整相位編碼梯度強度 ($G_y$)", -5.0, 5.0, 2.0, step=0.5)
         
         # 設定圖表 (3層)
-        fig_pe, (ax_grad, ax_wave, ax_spins) = plt.subplots(3, 1, figsize=(8, 12), gridspec_kw={'height_ratios': [1, 1, 1.2]})
-        fig_pe.subplots_adjust(hspace=0.6) # 拉開間距，避免重疊
+        fig_pe, (ax_grad, ax_spins, ax_proj) = plt.subplots(3, 1, figsize=(8, 12), gridspec_kw={'height_ratios': [1, 1.2, 1.2]})
+        fig_pe.subplots_adjust(hspace=0.6) # 拉開間距
         
         # --- 1. 上圖：梯度層 (ax_grad) ---
         y_pos = np.linspace(-1, 1, 21)
@@ -211,11 +211,11 @@ with tab_theory:
         ax_grad.plot(y_pos, field_strength, color='lime', linewidth=1.5, alpha=0.8)
         ax_grad.axhline(0, color='white', linestyle='--', alpha=0.5)
         
-        # 【優化箭頭】：調整 head_width, head_length，並使用 length_includes_head=True 讓箭頭剛好停在線上
+        # 畫箭頭
         for y, f in zip(y_pos[::2], field_strength[::2]):
             ax_grad.arrow(y, 0, 0, f, 
                           head_width=0.06, head_length=0.3, 
-                          length_includes_head=True, # 關鍵：包含箭頭長度
+                          length_includes_head=True, 
                           fc='lime', ec='lime', width=0.012)
 
         ax_grad.set_facecolor('black')
@@ -224,27 +224,12 @@ with tab_theory:
         ax_grad.tick_params(colors='white')
         ax_grad.set_ylim(-6, 6)
         
-        # --- 2. 中圖：信號大小 (ax_wave) ---
-        y_smooth = np.linspace(-1, 1, 300)
-        phase_smooth = -pe_gradient * y_smooth * np.pi
-        wave_smooth = np.cos(phase_smooth)
-        
-        ax_wave.set_facecolor('black')
-        ax_wave.plot(y_smooth, wave_smooth, color='yellow', linewidth=2)
-        ax_wave.fill_between(y_smooth, wave_smooth, color='yellow', alpha=0.3)
-        
-        ax_wave.set_title("Signal Intensity (Cosine Waveform)", color='white', fontsize=12, pad=10)
-        ax_wave.set_ylabel("Intensity", color='white')
-        ax_wave.tick_params(colors='white')
-        ax_wave.set_ylim(-1.2, 1.2)
-        ax_wave.set_xticklabels([]) # 隱藏 X 軸標籤
-        
-        # --- 3. 下圖：相位角 (ax_spins) ---
+        # --- 2. 中圖：相位角 (ax_spins) ---
         ax_spins.set_facecolor('black')
         ax_spins.set_xlim(-1.2, 1.2)
         ax_spins.set_ylim(-0.6, 0.6)
         ax_spins.axis('on')
-        ax_spins.set_yticks([]) # 隱藏 Y 軸
+        ax_spins.set_yticks([]) 
         for spine in ax_spins.spines.values(): spine.set_color('white')
 
         phase_angles = -pe_gradient * y_pos * np.pi 
@@ -254,12 +239,40 @@ with tab_theory:
             ax_spins.add_artist(circle)
             dx = 0.04 * np.sin(phase_angles[i])
             dy = 0.04 * np.cos(phase_angles[i])
-            ax_spins.arrow(center_x, center_y, dx, dy, head_width=0.0, color='yellow', width=0.008)
+            # 這是相位指針 (斜的)
+            ax_spins.arrow(center_x, center_y, dx, dy, head_width=0.0, color='cyan', width=0.008)
         
-        ax_spins.set_title("Spin Phase Angle", color='white', fontsize=12, pad=10)
+        ax_spins.set_title("Spin Phase Angle (Rotating Vectors)", color='white', fontsize=12, pad=10)
         ax_spins.set_xlabel("Position Y", color='white')
         ax_spins.tick_params(axis='x', colors='white')
 
+        # --- 3. 下圖：信號大小 (投影量) (ax_proj) ---
+        # 這是您要求的：用垂直向量來表示信號強度
+        ax_proj.set_facecolor('black')
+        ax_proj.set_xlim(-1.2, 1.2)
+        ax_proj.set_ylim(-0.6, 0.6)
+        ax_proj.axis('on')
+        ax_proj.set_yticks([]) 
+        for spine in ax_proj.spines.values(): spine.set_color('white')
+
+        for i, y in enumerate(y_pos):
+            center_x = y; center_y = 0
+            # 畫圓圈
+            circle = plt.Circle((center_x, center_y), 0.04, color='gray', fill=False)
+            ax_proj.add_artist(circle)
+            
+            # 計算垂直投影分量 (Cosine)
+            proj_dy = 0.04 * np.cos(phase_angles[i])
+            
+            # 畫垂直箭頭 (黃色)
+            # 從圓心 (y, 0) 出發，向上或向下指
+            ax_proj.arrow(center_x, center_y, 0, proj_dy, head_width=0.0, color='yellow', width=0.012)
+
+        ax_proj.set_title("Signal Intensity (Vertical Projection)", color='white', fontsize=12, pad=10)
+        ax_proj.set_xlabel("Position Y", color='white')
+        ax_proj.tick_params(axis='x', colors='white')
+
         fig_pe.patch.set_facecolor('black')
         st.pyplot(fig_pe)
+
         
