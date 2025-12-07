@@ -224,6 +224,22 @@ with tab_theory:
         ax_grad.set_ylabel("G strength", color='white')
         ax_grad.tick_params(colors='white')
         ax_grad.set_ylim(-6, 6)
+        
+        # --- 2. 中圖：波形層 (ax_wave) - 現在移到中間 ---
+        y_smooth = np.linspace(-1, 1, 300)
+        phase_smooth = -pe_gradient * y_smooth * np.pi
+        wave_smooth = np.cos(phase_smooth)
+        
+        ax_wave.set_facecolor('black')
+        ax_wave.plot(y_smooth, wave_smooth, color='yellow', linewidth=2)
+        ax_wave.fill_between(y_smooth, wave_smooth, color='yellow', alpha=0.3)
+        
+        ax_wave.set_title("Signal Intensity (Cosine Waveform)", color='white', fontsize=12, pad=10)
+        ax_wave.set_ylabel("Intensity", color='white')
+        ax_wave.tick_params(colors='white')
+        ax_wave.set_ylim(-1.2, 1.2)
+        # 隱藏中圖的 X 軸標籤，因為跟下圖共用
+        ax_wave.set_xticklabels([]) 
 
         # --- 3. 下圖：指針層 (ax_spins) - 現在移到最下 ---
         ax_spins.set_facecolor('black')
@@ -248,21 +264,3 @@ with tab_theory:
 
         fig_pe.patch.set_facecolor('black')
         st.pyplot(fig_pe)
-
-        # --- 2. 中圖：波形層 (ax_wave) - 現在移到中間 ---
-        y_smooth = np.linspace(-1, 1, 300)
-        phase_smooth = -pe_gradient * y_smooth * np.pi
-        wave_smooth = np.cos(phase_smooth)
-        
-        ax_wave.set_facecolor('black')
-        ax_wave.plot(y_smooth, wave_smooth, color='yellow', linewidth=2)
-        ax_wave.fill_between(y_smooth, wave_smooth, color='yellow', alpha=0.3)
-        
-        ax_wave.set_title("Signal Intensity (Cosine Waveform)", color='white', fontsize=12, pad=10)
-        ax_wave.set_ylabel("Intensity", color='white')
-        ax_wave.tick_params(colors='white')
-        ax_wave.set_ylim(-1.2, 1.2)
-        # 隱藏中圖的 X 軸標籤，因為跟下圖共用
-        ax_wave.set_xticklabels([]) 
-
-        
