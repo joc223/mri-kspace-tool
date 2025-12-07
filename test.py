@@ -281,3 +281,6 @@ with tab_theory:
     fig_pe.patch.set_facecolor('black')
     st.pyplot(fig_pe)
 
+st.divider()
+st.caption("© 2025 CSMU MIRS 1298002 wcy. 如果有發現未修復的 Bug 或建議，請聯絡 xes67421@gmail.com 謝謝。")
+
