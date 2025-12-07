@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
-# 1. 網頁基本設定
+# 1. 網頁基本設定 (已移除 layout="wide" 以適配手機)
 st.set_page_config(page_title="MRI K-space Simulator")
 
 # 2. 【核彈級隱藏 CSS】
@@ -24,7 +24,7 @@ hide_all_style = """
 """
 st.markdown(hide_all_style, unsafe_allow_html=True)
 
-# 3. 標題與說明
+# 3. 標題與說明 (修正標題，移除 Emoji)
 st.title("MRI K-space 原理模擬器")
 st.markdown("""
 **K-space (空間頻率)** 與 **影像空間 (Image Space)** 的對應關係觀察：
@@ -95,7 +95,6 @@ def plot_kspace_grid(k_x, k_y, size):
 
 st.pyplot(plot_kspace_grid(kx, ky, matrix_size))
 
-# 黃色點點備註
 st.warning("""
 **備註：**
 如果在手機或電腦螢幕上，真的把 128x128 (甚至 4096) 個黃色點點全部畫出來，
@@ -137,7 +136,6 @@ with col_left:
     cbar.set_label('Signal Intensity', rotation=270, labelpad=15)
     st.pyplot(fig1)
     
-# 【新增備註 1】解釋 kx, ky 意義
     st.info(f"""
     **現在是 $k_x={kx}, k_y={ky}$**
     這代表在 X 方向有 **{abs(kx)}** 個週期的亮暗條紋變化，
@@ -170,7 +168,6 @@ with col_right:
     ax2.legend(fontsize='small')
     st.pyplot(fig2)
     
-    # 【新增備註 2】解釋波形為何不斜
     st.info("""
     **為什麼波形不是斜的？**
     這張圖顯示的是 **「訊號強度 (Amplitude)」** 的變化，而非空間幾何形狀。
@@ -178,7 +175,7 @@ with col_right:
     其亮暗強度的變化（由白變黑再變白）永遠呈現上下震盪的正弦波形。
     """)
 
-# 底部總結 (保留原本的觀察重點)
+# 底部總結
 st.success("""
 **總結觀察重點：**
 1. **上方黑底圖**：顯示您目前在 K-space 的取樣位置（紅色點）。
@@ -186,125 +183,87 @@ st.success("""
 3. **右圖 (波形)**：顯示該頻率的實際震盪情形。中心點 (紅色虛線) 永遠是波峰，代表相位一致。
 """)
 
-# ==========================================
-# 分頁 2: 原理教學 (這是您要求的新增部分)
-# ==========================================
-with st.expander("進階原理教學：相位編碼與頻率編碼", expanded=False):
-    st.header("📚 進階原理教學")
-    st.markdown("這裡展示 **相位編碼 (Phase Encoding)** 與 **頻率編碼 (Frequency Encoding)** 的物理機制。")
+# --- 新增區塊：相位編碼原理教學 (已優化波形平滑度) ---
+st.write("---")
+st.header("🧲 進階原理：為什麼會有相位差？")
 
-    # --- 區塊 1：相位編碼原理 ---
-    with st.expander("1. 點擊展開：相位編碼原理 (Phase Encoding)", expanded=True):
-        st.write("""
-        **原理說明：**
-        這張圖模擬了 **梯度磁場 ($G_y$)** 如何讓不同位置的質子產生相位差。
-        * **梯度強**：相位捲得比較緊（頻率高）。
-        * **梯度弱**：相位捲得比較鬆（頻率低）。
-        """)
-        
-        pe_gradient = st.slider("調整相位編碼梯度強度 ($G_y$)", -5.0, 5.0, 2.0, step=0.5)
-        
-        # 【優化：加大高度，避免重疊】
-        fig_pe, (ax_grad, ax_spins, ax_wave) = plt.subplots(3, 1, figsize=(8, 10), gridspec_kw={'height_ratios': [1, 1, 1]})
-        fig_pe.subplots_adjust(hspace=0.6) # 拉開間距
-        
-        # 1. 梯度層
-        y_pos = np.linspace(-1, 1, 21)
-        field_strength = pe_gradient * y_pos
-        ax_grad.plot(y_pos, field_strength, color='lime', linewidth=1.5, alpha=0.8)
-        ax_grad.axhline(0, color='white', linestyle='--', alpha=0.5)
-        
-        # 【優化：箭頭繪製】
-        for y, f in zip(y_pos[::2], field_strength[::2]):
-            ax_grad.arrow(y, 0, 0, f, 
-                          head_width=0.08, head_length=0.4, 
-                          length_includes_head=True, 
-                          fc='lime', ec='lime', width=0.015)
+with st.expander("點擊展開：互動式相位編碼教學 (Phase Encoding Demo)"):
+    st.write("""
+    這張圖模擬了 **梯度磁場 ($G_y$)** 如何讓不同位置的質子產生相位差，以及對應的波形變化。
+    * **梯度強**：相位捲得緊，波形震盪快。
+    * **梯度弱**：相位捲得鬆，波形震盪慢。
+    """)
+    
+    # 控制項
+    gradient_strength = st.slider("調整梯度強度 ($G_y$)", -5.0, 5.0, 1.0, step=0.5)
+    
+    # 畫圖：增加高度，包含波形圖
+    fig_phase, (ax_grad, ax_spins, ax_wave) = plt.subplots(3, 1, figsize=(8, 8), gridspec_kw={'height_ratios': [1, 1, 1]})
+    
+    # 為了圖表美觀不重疊，增加子圖間距
+    fig_phase.subplots_adjust(hspace=0.5)
+    
+    # 1. 上圖：梯度磁場示意
+    y_pos = np.linspace(-1, 1, 21) # 這裡用 21 點畫箭頭就好，太多箭頭會很亂
+    field_strength = gradient_strength * y_pos
+    
+    ax_grad.plot(y_pos, field_strength, color='lime', linewidth=2)
+    ax_grad.axhline(0, color='white', linestyle='--')
+    
+    # 畫箭頭
+    for y, f in zip(y_pos[::2], field_strength[::2]):
+        ax_grad.arrow(y, 0, 0, f, head_width=0.05, head_length=0.2, fc='lime', ec='lime')
 
-        ax_grad.set_facecolor('black')
-        ax_grad.set_title(f"Gradient Field Strength (Slope = {pe_gradient})", color='white', fontsize=12)
-        ax_grad.set_ylabel("G strength", color='white')
-        ax_grad.tick_params(colors='white')
-        ax_grad.set_ylim(-6, 6)
-        
-        # 2. 指針層
-        ax_spins.set_facecolor('black')
-        ax_spins.set_xlim(-1.2, 1.2)
-        ax_spins.set_ylim(-0.5, 0.5)
-        ax_spins.axis('off')
-        
-        phase_angles = -pe_gradient * y_pos * np.pi 
-        
-        for i, y in enumerate(y_pos):
-            center_x = y; center_y = 0
-            circle = plt.Circle((center_x, center_y), 0.04, color='gray', fill=False)
-            ax_spins.add_artist(circle)
-            dx = 0.04 * np.sin(phase_angles[i])
-            dy = 0.04 * np.cos(phase_angles[i])
-            ax_spins.arrow(center_x, center_y, dx, dy, head_width=0.0, color='yellow', width=0.008)
-        ax_spins.set_title("Spin Phase (Accumulated Phase)", color='white', fontsize=12)
+    ax_grad.set_facecolor('black')
+    ax_grad.set_title(f"Gradient Field Strength (Slope = {gradient_strength})", color='white')
+    ax_grad.set_ylabel("Field Strength", color='white')
+    ax_grad.tick_params(colors='white')
+    ax_grad.set_ylim(-6, 6)
+    
+    # 2. 中圖：磁矩相位 (圓圈指針)
+    ax_spins.set_facecolor('black')
+    ax_spins.set_xlim(-1.2, 1.2)
+    ax_spins.set_ylim(-0.5, 0.5)
+    ax_spins.axis('off')
+    
+    # 箭頭部分用 21 個點來畫比較清楚
+    for i, y in enumerate(y_pos):
+        phase_angle = -gradient_strength * y * np.pi 
+        center_x = y
+        center_y = 0
+        circle = plt.Circle((center_x, center_y), 0.04, color='gray', fill=False)
+        ax_spins.add_artist(circle)
+        dx = 0.04 * np.sin(phase_angle)
+        dy = 0.04 * np.cos(phase_angle)
+        ax_spins.arrow(center_x, center_y, dx, dy, head_width=0.0, color='yellow', width=0.005)
 
-        # 3. 波形層
-        ax_wave.set_facecolor('black')
-        spatial_wave = np.cos(phase_angles)
-        ax_wave.plot(y_pos, spatial_wave, color='yellow', linewidth=2)
-        ax_wave.fill_between(y_pos, spatial_wave, alpha=0.3, color='yellow')
-        ax_wave.set_title("Spatial Modulation Waveform (Cosine)", color='white', fontsize=12)
-        ax_wave.set_xlabel("Position Y", color='white')
-        ax_wave.tick_params(colors='white')
-        ax_wave.set_ylim(-1.2, 1.2)
+    ax_spins.set_title("Spin Phase (Yellow Arrows)", color='white')
+    
+    # 3. 下圖：對應的 Cosine 波形 (這裡我們用很多點來畫，讓它變平滑！)
+    y_smooth = np.linspace(-1, 1, 300) # 用 300 個點來畫波形，保證平滑
+    phase_smooth = -gradient_strength * y_smooth * np.pi
+    wave_smooth = np.cos(phase_smooth)
+    
+    ax_wave.plot(y_smooth, wave_smooth, color='yellow', linewidth=2)
+    # 填充顏色增加可讀性
+    ax_wave.fill_between(y_smooth, wave_smooth, color='yellow', alpha=0.3)
+    
+    ax_wave.set_facecolor('black')
+    ax_wave.set_title("Spatial Modulation Waveform (Cosine)", color='white')
+    ax_wave.set_xlabel("Position Y", color='white')
+    ax_wave.tick_params(colors='white')
+    ax_wave.set_ylim(-1.2, 1.2)
+    
+    # 設定整張圖背景
+    fig_phase.patch.set_facecolor('black')
+    
+    st.pyplot(fig_phase)
+    
+    st.info("""
+    **觀察重點：**
+    1. 上圖：梯度磁場強度隨位置線性變化。
+    2. 中圖：受磁場影響，指針產生不同角度的旋轉。
+    3. 下圖：這些指針在水平方向的分量，剛好就構成了一個 Cosine 波形！梯度越強，波越密。
+    """)
 
-        fig_pe.patch.set_facecolor('black')
-        st.pyplot(fig_pe)
-
-    # --- 區塊 2：頻率編碼原理 ---
-    with st.expander("2. 點擊展開：頻率編碼原理 (Frequency Encoding)"):
-        st.write("""
-        **原理說明 (賽跑跑道比喻)：**
-        頻率編碼是讓不同位置的質子以 **「不同的速度 (頻率)」** 旋轉。
-        * **左邊 ($x < 0$)**：磁場弱，轉得慢（波形寬）。
-        * **中間 ($x = 0$)**：磁場不變，標準速度。
-        * **右邊 ($x > 0$)**：磁場強，轉得快（波形密）。
-        """)
-        
-        fe_gradient = st.slider("調整頻率編碼梯度強度 ($G_x$)", 0.0, 5.0, 2.0, step=0.5)
-        
-        fig_fe, (ax_fe_grad, ax_fe_waves) = plt.subplots(2, 1, figsize=(8, 8), gridspec_kw={'height_ratios': [1, 2]})
-        fig_fe.subplots_adjust(hspace=0.4) 
-        
-        # 1. 梯度層
-        x_pos = np.linspace(-1, 1, 100)
-        fe_field = fe_gradient * x_pos
-        ax_fe_grad.plot(x_pos, fe_field, color='cyan', linewidth=2)
-        ax_fe_grad.axhline(0, color='white', linestyle='--')
-        ax_fe_grad.set_facecolor('black')
-        ax_fe_grad.set_title("Readout Gradient (Gx)", color='white', fontsize=12)
-        ax_fe_grad.set_ylabel("Field Strength", color='white')
-        ax_fe_grad.tick_params(colors='white')
-        
-        # 2. 波形層
-        ax_fe_waves.set_facecolor('black')
-        time = np.linspace(0, 4*np.pi, 200)
-        base_freq = 2.0
-        freq_L = base_freq - fe_gradient * 0.5
-        wave_L = np.cos(freq_L * time) + 2.5
-        freq_C = base_freq
-        wave_C = np.cos(freq_C * time) + 0
-        freq_R = base_freq + fe_gradient * 0.5
-        wave_R = np.cos(freq_R * time) - 2.5
-        
-        ax_fe_waves.plot(time, wave_L, color='yellow', label='Left (Slow)')
-        ax_fe_waves.plot(time, wave_C, color='white', label='Center (Medium)')
-        ax_fe_waves.plot(time, wave_R, color='cyan', label='Right (Fast)')
-        
-        ax_fe_waves.text(0, 3.8, "Position x = -1 (Low Freq)", color='yellow', fontsize=10, fontweight='bold')
-        ax_fe_waves.text(0, 1.3, "Position x = 0 (Base Freq)", color='white', fontsize=10, fontweight='bold')
-        ax_fe_waves.text(0, -1.2, "Position x = +1 (High Freq)", color='cyan', fontsize=10, fontweight='bold')
-        
-        ax_fe_waves.set_xlabel("Time (Readout duration)", color='white')
-        ax_fe_waves.set_yticks([])
-        ax_fe_waves.tick_params(axis='x', colors='white')
-        ax_fe_waves.set_title("Signal Evolution over Time", color='white', fontsize=12)
-        
-        fig_fe.patch.set_facecolor('black')
-        st.pyplot(fig_fe)
+    
