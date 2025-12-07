@@ -2,26 +2,19 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
-# 1. 網頁基本設定 (移除 layout="wide" 以適配手機)
+# 1. 網頁基本設定
 st.set_page_config(page_title="MRI K-space Simulator")
 
 # 2. 【核彈級隱藏 CSS】
 hide_all_style = """
 <style>
-    /* 隱藏頂部 Header */
     header {visibility: hidden;}
-    
-    /* 隱藏右上角的三點選單 */
     #MainMenu {visibility: hidden;}
-    
-    /* 隱藏頁尾 */
     footer {visibility: hidden;}
-    
-    /* 隱藏 Manage App 按鈕 */
     .stAppDeployButton {display: none;}
     [data-testid="stManageAppButton"] {display: none;}
     
-    /* 優化 Tabs 的字體大小 */
+    /* 優化 Tabs 字體 */
     button[data-baseweb="tab"] {
         font-size: 18px;
         font-weight: bold;
@@ -75,7 +68,6 @@ with tab_sim:
         fig, ax = plt.subplots(figsize=(6, 4))
         display_limit = 10
         
-        # 背景網格
         grid_x, grid_y = np.meshgrid(np.arange(-display_limit, display_limit+1), 
                                      np.arange(-display_limit, display_limit+1))
         
@@ -83,7 +75,6 @@ with tab_sim:
         ax.axhline(0, color='white', linewidth=1)
         ax.axvline(0, color='white', linewidth=1)
         
-        # 紅色當前點
         if abs(k_x) <= display_limit and abs(k_y) <= display_limit:
             ax.scatter([k_x], [k_y], c='red', s=120, edgecolors='white', linewidth=2, label='Current', zorder=10)
             ax.annotate(f'({k_x}, {k_y})', xy=(k_x, k_y), xytext=(k_x+1, k_y+1),
@@ -107,7 +98,7 @@ with tab_sim:
     st.pyplot(plot_kspace_grid(kx, ky, matrix_size))
 
     st.warning("""
-    **💡 備註：**
+    **備註：**
     如果在手機或電腦螢幕上，真的把 128x128 (甚至 4096) 個黃色點點全部畫出來，它們會擠在一起變成一塊「實心的黃色方塊」，會完全看不出「網格」的感覺，因此僅畫到 21x21 的中心區域示意，**絕對完全並非作者本人偷懶**。
     """)
 
@@ -178,118 +169,115 @@ with tab_sim:
         st.pyplot(fig2)
         
         st.info("""
-        **💡 為什麼波形不是斜的？**
+        **為什麼波形不是斜的？**
         這張圖顯示的是 **「訊號強度 (Amplitude)」** 的變化，而非空間幾何形狀。
         無論左圖的條紋是直的、橫的或斜的，沿著波傳遞方向切開來看，
         其亮暗強度的變化（由白變黑再變白）永遠呈現上下震盪的正弦波形。
         """)
 
 # ==========================================
-# 分頁 2: 原理教學 (Phase Encoding - 四層圖表版)
+# 分頁 2: 原理教學 (直接顯示，移除 expander)
 # ==========================================
 with tab_theory:
     st.header("📚 進階原理教學：相位編碼")
     
-    with st.expander("點擊展開：互動式相位編碼教學 (Phase Encoding Demo)", expanded=True):
-        st.write("""
-        **原理說明：**
-        這張圖模擬了 **梯度磁場 ($G_y$)** 如何讓不同位置的質子產生相位差，最終形成訊號波形。
-        1. **梯度 (Gradient)**：施加磁場梯度。
-        2. **相角 (Phase)**：質子產生不同角度的旋轉。
-        3. **投影 (Projection)**：取出垂直方向的分量（實際訊號強度）。
-        4. **波形 (Waveform)**：將投影量連起來，就變成了 Cosine 波形！
-        """)
-        
-        pe_gradient = st.slider("調整相位編碼梯度強度 ($G_y$)", -5.0, 5.0, 2.0, step=0.5)
-        
-        # 設定圖表 (4層)，高度加大到 16 以容納四張圖
-        fig_pe, (ax_grad, ax_spins, ax_proj, ax_wave) = plt.subplots(4, 1, figsize=(8, 16), 
-                                                                     gridspec_kw={'height_ratios': [1, 1.2, 1.2, 1]})
-        fig_pe.subplots_adjust(hspace=0.6) # 拉開間距
-        
-        # --- 1. 第一層：梯度層 (ax_grad) ---
-        y_pos = np.linspace(-1, 1, 21)
-        field_strength = pe_gradient * y_pos
-        ax_grad.plot(y_pos, field_strength, color='lime', linewidth=1.5, alpha=0.8)
-        ax_grad.axhline(0, color='white', linestyle='--', alpha=0.5)
-        
-        # 畫梯度箭頭
-        for y, f in zip(y_pos[::2], field_strength[::2]):
-            ax_grad.arrow(y, 0, 0, f, 
-                          head_width=0.06, head_length=0.3, 
-                          length_includes_head=True, 
-                          fc='lime', ec='lime', width=0.012)
+    st.write("""
+    **原理說明：**
+    這張圖模擬了 **梯度磁場 ($G_y$)** 如何讓不同位置的質子產生相位差，最終形成訊號波形。
+    1. **梯度 (Gradient)**：施加磁場梯度。
+    2. **相角 (Phase)**：質子產生不同角度的旋轉。
+    3. **投影 (Projection)**：取出垂直方向的分量（實際訊號強度）。
+    4. **波形 (Waveform)**：將投影量連起來，就變成了 Cosine 波形！
+    """)
+    
+    pe_gradient = st.slider("調整相位編碼梯度強度 ($G_y$)", -5.0, 5.0, 2.0, step=0.5)
+    
+    # 設定圖表 (4層)，高度加大到 16 以容納四張圖
+    fig_pe, (ax_grad, ax_spins, ax_proj, ax_wave) = plt.subplots(4, 1, figsize=(8, 16), 
+                                                                 gridspec_kw={'height_ratios': [1, 1.2, 1.2, 1]})
+    fig_pe.subplots_adjust(hspace=0.6) # 拉開間距
+    
+    # --- 1. 第一層：梯度層 (ax_grad) ---
+    y_pos = np.linspace(-1, 1, 21)
+    field_strength = pe_gradient * y_pos
+    ax_grad.plot(y_pos, field_strength, color='lime', linewidth=1.5, alpha=0.8)
+    ax_grad.axhline(0, color='white', linestyle='--', alpha=0.5)
+    
+    # 畫梯度箭頭
+    for y, f in zip(y_pos[::2], field_strength[::2]):
+        ax_grad.arrow(y, 0, 0, f, 
+                      head_width=0.06, head_length=0.3, 
+                      length_includes_head=True, 
+                      fc='lime', ec='lime', width=0.012)
 
-        ax_grad.set_facecolor('black')
-        ax_grad.set_title(f"1. Gradient Field Strength (Slope = {pe_gradient})", color='white', fontsize=12, pad=10)
-        ax_grad.set_ylabel("G strength", color='white')
-        ax_grad.tick_params(colors='white')
-        ax_grad.set_ylim(-6, 6)
+    ax_grad.set_facecolor('black')
+    ax_grad.set_title(f"1. Gradient Field Strength (Slope = {pe_gradient})", color='white', fontsize=12, pad=10)
+    ax_grad.set_ylabel("G strength", color='white')
+    ax_grad.tick_params(colors='white')
+    ax_grad.set_ylim(-6, 6)
+    
+    # --- 2. 第二層：相位角 (ax_spins) ---
+    ax_spins.set_facecolor('black')
+    ax_spins.set_xlim(-1.2, 1.2)
+    ax_spins.set_ylim(-0.6, 0.6)
+    ax_spins.axis('on')
+    ax_spins.set_yticks([]) 
+    for spine in ax_spins.spines.values(): spine.set_color('white')
+
+    phase_angles = -pe_gradient * y_pos * np.pi 
+    for i, y in enumerate(y_pos):
+        center_x = y; center_y = 0
+        circle = plt.Circle((center_x, center_y), 0.04, color='gray', fill=False)
+        ax_spins.add_artist(circle)
+        dx = 0.04 * np.sin(phase_angles[i])
+        dy = 0.04 * np.cos(phase_angles[i])
+        # 相位指針 (藍色)
+        ax_spins.arrow(center_x, center_y, dx, dy, head_width=0.0, color='cyan', width=0.008)
+    
+    ax_spins.set_title("2. Spin Phase Angle (Rotating Vectors)", color='white', fontsize=12, pad=10)
+    ax_spins.set_xlabel("Position Y", color='white')
+    ax_spins.tick_params(axis='x', colors='white')
+
+    # --- 3. 第三層：信號投影量 (ax_proj) ---
+    ax_proj.set_facecolor('black')
+    ax_proj.set_xlim(-1.2, 1.2)
+    ax_proj.set_ylim(-0.6, 0.6)
+    ax_proj.axis('on')
+    ax_proj.set_yticks([]) 
+    for spine in ax_proj.spines.values(): spine.set_color('white')
+
+    for i, y in enumerate(y_pos):
+        center_x = y; center_y = 0
+        circle = plt.Circle((center_x, center_y), 0.04, color='gray', fill=False)
+        ax_proj.add_artist(circle)
         
-        # --- 2. 第二層：相位角 (ax_spins) ---
-        ax_spins.set_facecolor('black')
-        ax_spins.set_xlim(-1.2, 1.2)
-        ax_spins.set_ylim(-0.6, 0.6)
-        ax_spins.axis('on')
-        ax_spins.set_yticks([]) 
-        for spine in ax_spins.spines.values(): spine.set_color('white')
-
-        phase_angles = -pe_gradient * y_pos * np.pi 
-        for i, y in enumerate(y_pos):
-            center_x = y; center_y = 0
-            circle = plt.Circle((center_x, center_y), 0.04, color='gray', fill=False)
-            ax_spins.add_artist(circle)
-            dx = 0.04 * np.sin(phase_angles[i])
-            dy = 0.04 * np.cos(phase_angles[i])
-            # 相位指針 (藍色)
-            ax_spins.arrow(center_x, center_y, dx, dy, head_width=0.0, color='cyan', width=0.008)
+        # 計算垂直投影分量
+        proj_dy = 0.04 * np.cos(phase_angles[i])
         
-        ax_spins.set_title("2. Spin Phase Angle (Rotating Vectors)", color='white', fontsize=12, pad=10)
-        ax_spins.set_xlabel("Position Y", color='white')
-        ax_spins.tick_params(axis='x', colors='white')
+        # 畫垂直箭頭 (黃色) - 稍微加長加細
+        ax_proj.arrow(center_x, center_y, 0, proj_dy, head_width=0.0, color='yellow', width=0.005)
 
-        # --- 3. 第三層：信號投影量 (ax_proj) ---
-        ax_proj.set_facecolor('black')
-        ax_proj.set_xlim(-1.2, 1.2)
-        ax_proj.set_ylim(-0.6, 0.6)
-        ax_proj.axis('on')
-        ax_proj.set_yticks([]) 
-        for spine in ax_proj.spines.values(): spine.set_color('white')
+    ax_proj.set_title("3. Signal Intensity (Vertical Projection)", color='white', fontsize=12, pad=10)
+    ax_proj.set_xlabel("Position Y", color='white')
+    ax_proj.tick_params(axis='x', colors='white')
 
-        for i, y in enumerate(y_pos):
-            center_x = y; center_y = 0
-            circle = plt.Circle((center_x, center_y), 0.04, color='gray', fill=False)
-            ax_proj.add_artist(circle)
-            
-            # 計算垂直投影分量
-            proj_dy = 0.04 * np.cos(phase_angles[i])
-            
-            # 【優化】這裡把箭頭改細 (width=0.005) 且長度比例放大一點 (乘以 1.5 倍視覺效果)
-            # 為了讓箭頭看得清楚，我們讓它稍微超出圓圈一點點沒關係，或者保持在圓圈內
-            # 這裡保持真實比例，但線條改細讓它看起來更俐落
-            ax_proj.arrow(center_x, center_y, 0, proj_dy, head_width=0.0, color='yellow', width=0.005)
+    # --- 4. 第四層：Cosine 波形 (ax_wave) ---
+    y_smooth = np.linspace(-1, 1, 300)
+    phase_smooth = -pe_gradient * y_smooth * np.pi
+    wave_smooth = np.cos(phase_smooth)
+    
+    ax_wave.set_facecolor('black')
+    # 畫出黃色波形
+    ax_wave.plot(y_smooth, wave_smooth, color='yellow', linewidth=2)
+    # 填色增加視覺效果
+    ax_wave.fill_between(y_smooth, wave_smooth, color='yellow', alpha=0.3)
+    
+    ax_wave.set_title("4. Resulting Waveform (Cosine)", color='white', fontsize=12, pad=10)
+    ax_wave.set_ylabel("Intensity", color='white')
+    ax_wave.set_xlabel("Position Y", color='white')
+    ax_wave.tick_params(colors='white')
+    ax_wave.set_ylim(-1.2, 1.2)
 
-        ax_proj.set_title("3. Signal Intensity (Vertical Projection)", color='white', fontsize=12, pad=10)
-        ax_proj.set_xlabel("Position Y", color='white')
-        ax_proj.tick_params(axis='x', colors='white')
-
-        # --- 4. 第四層：Cosine 波形 (ax_wave) - 新增的部分！ ---
-        y_smooth = np.linspace(-1, 1, 300)
-        phase_smooth = -pe_gradient * y_smooth * np.pi
-        wave_smooth = np.cos(phase_smooth)
-        
-        ax_wave.set_facecolor('black')
-        # 畫出黃色波形
-        ax_wave.plot(y_smooth, wave_smooth, color='yellow', linewidth=2)
-        # 填色增加視覺效果
-        ax_wave.fill_between(y_smooth, wave_smooth, color='yellow', alpha=0.3)
-        
-        ax_wave.set_title("4. Resulting Waveform (Cosine)", color='white', fontsize=12, pad=10)
-        ax_wave.set_ylabel("Intensity", color='white')
-        ax_wave.set_xlabel("Position Y", color='white')
-        ax_wave.tick_params(colors='white')
-        ax_wave.set_ylim(-1.2, 1.2)
-
-        fig_pe.patch.set_facecolor('black')
-        st.pyplot(fig_pe)
+    fig_pe.patch.set_facecolor('black')
+    st.pyplot(fig_pe)
 
