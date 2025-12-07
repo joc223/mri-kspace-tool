@@ -34,7 +34,7 @@ st.markdown(hide_all_style, unsafe_allow_html=True)
 st.title("MRI K-space 原理模擬器")
 
 # --- 建立分頁 (Tabs) ---
-tab_sim, tab_theory = st.tabs(["🧲 K-space 模擬器", "📚 原理教學 (Phase/Freq)"])
+tab_sim, tab_theory = st.tabs(["🧲 K-space 模擬器", "📚 相位編碼原理"])
 
 # ==========================================
 # 分頁 1: K-space 模擬器
@@ -114,6 +114,7 @@ with tab_sim:
     st.write("---")
 
     # --- 核心運算 ---
+    @st.cache_data 
     def generate_centered_pattern(size, k_x, k_y):
         x = np.linspace(-0.5, 0.5, size)
         y = np.linspace(-0.5, 0.5, size)
@@ -162,7 +163,7 @@ with tab_sim:
             info_text = "DC Component (Constant)"
         else:
             waveform = np.cos(2 * np.pi * k_magnitude * t)
-            info_text = f"Freq: {k_magnitude:.2f}"
+            info_text = f"Freq: {k_magnitude:.2f} cycles/FOV"
 
         ax2.plot(t, waveform, color='#1f77b4', linewidth=2)
         ax2.axvline(0, color='red', linestyle='--', alpha=0.6, label='Center')
@@ -184,27 +185,25 @@ with tab_sim:
         """)
 
 # ==========================================
-# 分頁 2: 原理教學 (已調整順序與優化箭頭)
+# 分頁 2: 原理教學 (Phase Encoding)
 # ==========================================
 with tab_theory:
-    st.header("📚 進階原理教學")
-    st.markdown("這裡展示 **相位編碼 (Phase Encoding)** 與 **頻率編碼 (Frequency Encoding)** 的物理機制。")
-
-    # --- 區塊 1：相位編碼原理 ---
-    with st.expander("1. 點擊展開：相位編碼原理 (Phase Encoding)", expanded=True):
+    st.header("📚 進階原理教學：相位編碼")
+    
+    with st.expander("點擊展開：互動式相位編碼教學 (Phase Encoding Demo)", expanded=True):
         st.write("""
         **原理說明：**
         這張圖模擬了 **梯度磁場 ($G_y$)** 如何讓不同位置的質子產生相位差，並對應到訊號強度波形。
         * **上圖 (梯度)**：顯示施加的磁場梯度斜率。
-        * **中圖 (波形)**：顯示對應的訊號強度 (Cosine波)。
-        * **下圖 (相位)**：顯示質子磁矩的旋轉角度。
+        * **中圖 (信號大小)**：顯示對應的訊號強度變化 (Cosine 波形)。
+        * **下圖 (相位角)**：顯示質子磁矩的旋轉角度。
         """)
         
         pe_gradient = st.slider("調整相位編碼梯度強度 ($G_y$)", -5.0, 5.0, 2.0, step=0.5)
         
-        # 【調整順序】將 ax_wave 移到中間 (ax_grad, ax_wave, ax_spins)
+        # 設定圖表 (3層)
         fig_pe, (ax_grad, ax_wave, ax_spins) = plt.subplots(3, 1, figsize=(8, 12), gridspec_kw={'height_ratios': [1, 1, 1.2]})
-        fig_pe.subplots_adjust(hspace=0.6) # 拉開間距
+        fig_pe.subplots_adjust(hspace=0.6) # 拉開間距，避免重疊
         
         # --- 1. 上圖：梯度層 (ax_grad) ---
         y_pos = np.linspace(-1, 1, 21)
@@ -212,12 +211,12 @@ with tab_theory:
         ax_grad.plot(y_pos, field_strength, color='lime', linewidth=1.5, alpha=0.8)
         ax_grad.axhline(0, color='white', linestyle='--', alpha=0.5)
         
-        # 【優化箭頭】調整 head_width, head_length 和 width，使其不重疊
+        # 【優化箭頭】：調整 head_width, head_length，並使用 length_includes_head=True 讓箭頭剛好停在線上
         for y, f in zip(y_pos[::2], field_strength[::2]):
             ax_grad.arrow(y, 0, 0, f, 
-                          head_width=0.06, head_length=0.3, # 箭頭頭部變小
-                          length_includes_head=True,        # 包含頭部長度
-                          fc='lime', ec='lime', width=0.012) # 箭身變細
+                          head_width=0.06, head_length=0.3, 
+                          length_includes_head=True, # 關鍵：包含箭頭長度
+                          fc='lime', ec='lime', width=0.012)
 
         ax_grad.set_facecolor('black')
         ax_grad.set_title(f"Gradient Field Strength (Slope = {pe_gradient})", color='white', fontsize=12, pad=10)
@@ -225,7 +224,7 @@ with tab_theory:
         ax_grad.tick_params(colors='white')
         ax_grad.set_ylim(-6, 6)
         
-        # --- 2. 中圖：波形層 (ax_wave) - 現在移到中間 ---
+        # --- 2. 中圖：信號大小 (ax_wave) ---
         y_smooth = np.linspace(-1, 1, 300)
         phase_smooth = -pe_gradient * y_smooth * np.pi
         wave_smooth = np.cos(phase_smooth)
@@ -238,16 +237,15 @@ with tab_theory:
         ax_wave.set_ylabel("Intensity", color='white')
         ax_wave.tick_params(colors='white')
         ax_wave.set_ylim(-1.2, 1.2)
-        # 隱藏中圖的 X 軸標籤，因為跟下圖共用
-        ax_wave.set_xticklabels([]) 
-
-        # --- 3. 下圖：指針層 (ax_spins) - 現在移到最下 ---
+        ax_wave.set_xticklabels([]) # 隱藏 X 軸標籤
+        
+        # --- 3. 下圖：相位角 (ax_spins) ---
         ax_spins.set_facecolor('black')
         ax_spins.set_xlim(-1.2, 1.2)
-        ax_spins.set_ylim(-0.6, 0.6) # 稍微加大空間
-        ax_spins.axis('on') # 顯示座標軸以對齊
-        ax_spins.set_yticks([]) # 隱藏 Y 軸刻度
-        for spine in ax_spins.spines.values(): spine.set_color('white') # 白色邊框
+        ax_spins.set_ylim(-0.6, 0.6)
+        ax_spins.axis('on')
+        ax_spins.set_yticks([]) # 隱藏 Y 軸
+        for spine in ax_spins.spines.values(): spine.set_color('white')
 
         phase_angles = -pe_gradient * y_pos * np.pi 
         for i, y in enumerate(y_pos):
@@ -264,3 +262,4 @@ with tab_theory:
 
         fig_pe.patch.set_facecolor('black')
         st.pyplot(fig_pe)
+        
