@@ -113,8 +113,7 @@ with tab_sim:
 
     st.write("---")
 
-    # --- 核心運算 (加入快取優化) ---
-    @st.cache_data 
+    # --- 核心運算 ---
     def generate_centered_pattern(size, k_x, k_y):
         x = np.linspace(-0.5, 0.5, size)
         y = np.linspace(-0.5, 0.5, size)
@@ -225,22 +224,6 @@ with tab_theory:
         ax_grad.set_ylabel("G strength", color='white')
         ax_grad.tick_params(colors='white')
         ax_grad.set_ylim(-6, 6)
-        
-        # --- 2. 中圖：波形層 (ax_wave) - 現在移到中間 ---
-        y_smooth = np.linspace(-1, 1, 300)
-        phase_smooth = -pe_gradient * y_smooth * np.pi
-        wave_smooth = np.cos(phase_smooth)
-        
-        ax_wave.set_facecolor('black')
-        ax_wave.plot(y_smooth, wave_smooth, color='yellow', linewidth=2)
-        ax_wave.fill_between(y_smooth, wave_smooth, color='yellow', alpha=0.3)
-        
-        ax_wave.set_title("Signal Intensity (Cosine Waveform)", color='white', fontsize=12, pad=10)
-        ax_wave.set_ylabel("Intensity", color='white')
-        ax_wave.tick_params(colors='white')
-        ax_wave.set_ylim(-1.2, 1.2)
-        # 隱藏中圖的 X 軸標籤，因為跟下圖共用
-        ax_wave.set_xticklabels([]) 
 
         # --- 3. 下圖：指針層 (ax_spins) - 現在移到最下 ---
         ax_spins.set_facecolor('black')
@@ -266,56 +249,20 @@ with tab_theory:
         fig_pe.patch.set_facecolor('black')
         st.pyplot(fig_pe)
 
-    # --- 區塊 2：頻率編碼原理 ---
-    with st.expander("2. 點擊展開：頻率編碼原理 (Frequency Encoding)"):
-        st.write("""
-        **原理說明 (賽跑跑道比喻)：**
-        頻率編碼是讓不同位置的質子以 **「不同的速度 (頻率)」** 旋轉。
-        * **左邊 ($x < 0$)**：磁場弱，轉得慢（波形寬）。
-        * **中間 ($x = 0$)**：磁場不變，標準速度。
-        * **右邊 ($x > 0$)**：磁場強，轉得快（波形密）。
-        """)
+        # --- 2. 中圖：波形層 (ax_wave) - 現在移到中間 ---
+        y_smooth = np.linspace(-1, 1, 300)
+        phase_smooth = -pe_gradient * y_smooth * np.pi
+        wave_smooth = np.cos(phase_smooth)
         
-        fe_gradient = st.slider("調整頻率編碼梯度強度 ($G_x$)", 0.0, 5.0, 2.0, step=0.5)
+        ax_wave.set_facecolor('black')
+        ax_wave.plot(y_smooth, wave_smooth, color='yellow', linewidth=2)
+        ax_wave.fill_between(y_smooth, wave_smooth, color='yellow', alpha=0.3)
         
-        fig_fe, (ax_fe_grad, ax_fe_waves) = plt.subplots(2, 1, figsize=(8, 8), gridspec_kw={'height_ratios': [1, 2]})
-        fig_fe.subplots_adjust(hspace=0.4) 
-        
-        # 1. 梯度層
-        x_pos = np.linspace(-1, 1, 100)
-        fe_field = fe_gradient * x_pos
-        ax_fe_grad.plot(x_pos, fe_field, color='cyan', linewidth=2)
-        ax_fe_grad.axhline(0, color='white', linestyle='--')
-        ax_fe_grad.set_facecolor('black')
-        ax_fe_grad.set_title("Readout Gradient (Gx)", color='white', fontsize=12)
-        ax_fe_grad.set_ylabel("Field Strength", color='white')
-        ax_fe_grad.tick_params(colors='white')
-        
-        # 2. 波形層
-        ax_fe_waves.set_facecolor('black')
-        time = np.linspace(0, 4*np.pi, 200)
-        base_freq = 2.0
-        freq_L = base_freq - fe_gradient * 0.5
-        wave_L = np.cos(freq_L * time) + 2.5
-        freq_C = base_freq
-        wave_C = np.cos(freq_C * time) + 0
-        freq_R = base_freq + fe_gradient * 0.5
-        wave_R = np.cos(freq_R * time) - 2.5
-        
-        ax_fe_waves.plot(time, wave_L, color='yellow', label='Left (Slow)')
-        ax_fe_waves.plot(time, wave_C, color='white', label='Center (Medium)')
-        ax_fe_waves.plot(time, wave_R, color='cyan', label='Right (Fast)')
-        
-        ax_fe_waves.text(0, 3.8, "Position x = -1 (Low Freq)", color='yellow', fontsize=10, fontweight='bold')
-        ax_fe_waves.text(0, 1.3, "Position x = 0 (Base Freq)", color='white', fontsize=10, fontweight='bold')
-        ax_fe_waves.text(0, -1.2, "Position x = +1 (High Freq)", color='cyan', fontsize=10, fontweight='bold')
-        
-        ax_fe_waves.set_xlabel("Time (Readout duration)", color='white')
-        ax_fe_waves.set_yticks([])
-        ax_fe_waves.tick_params(axis='x', colors='white')
-        ax_fe_waves.set_title("Signal Evolution over Time", color='white', fontsize=12)
-        
-        fig_fe.patch.set_facecolor('black')
-        st.pyplot(fig_fe)
+        ax_wave.set_title("Signal Intensity (Cosine Waveform)", color='white', fontsize=12, pad=10)
+        ax_wave.set_ylabel("Intensity", color='white')
+        ax_wave.tick_params(colors='white')
+        ax_wave.set_ylim(-1.2, 1.2)
+        # 隱藏中圖的 X 軸標籤，因為跟下圖共用
+        ax_wave.set_xticklabels([]) 
 
         
