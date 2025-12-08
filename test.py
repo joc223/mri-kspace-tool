@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # 1. 網頁基本設定
 st.set_page_config(page_title="MRI K-space Simulator")
 
-# 2. 【核彈級隱藏 CSS】
+# 2. CSS
 hide_all_style = """
 <style>
     header {visibility: hidden;}
@@ -26,21 +26,19 @@ st.markdown(hide_all_style, unsafe_allow_html=True)
 # 3. 標題
 st.title("MRI K-space 原理模擬器")
 
-# --- 建立分頁 (Tabs) ---
-tab_sim, tab_theory = st.tabs(["🧲 K-space 模擬器", "📚 相位編碼原理"])
+tab_sim, tab_theory = st.tabs(["K-space 模擬器", "空間編碼原理"]) # 建立兩個分頁
 
-# ==========================================
-# 分頁 1: K-space 模擬器
-# ==========================================
+
+# 分頁 1 : K-space、亮暗條紋變化、波形
 with tab_sim:
     st.markdown("""
-    **觀察 K-space (空間頻率) 與 影像空間 (Image Space) 的對應關係：**
-    * **中心點 (coordinate center)**：為 kx=0, ky=0 時，訊號最強。
-    * **$k_x, k_y$**：代表在 X 或 Y 方向上的頻率變化（週期數）。
+    **觀察 K-space、條紋變化與波形 的對應關係：**
+    * **K-space 中心點(coordinate center)**：為 $k_x, k_y$ 時，訊號最強。
+    * **$k_x, k_y$**：代表在 K-space 上 X 或 Y 方向上的頻率變化(或稱亮暗條紋變化）。
     """)
     st.write("---")
 
-    # --- 參數控制區 ---
+    # 參數控制區
     c1, c2, c3 = st.columns([1, 1, 1])
 
     with c1:
@@ -52,17 +50,17 @@ with tab_sim:
         )
 
     with c2:
-        st.subheader("2. 調整 X 頻率")
+        st.subheader("2. 調整 X 方向的頻率")
         kx = st.slider("kx (可當作頻率編碼)", min_value=-10, max_value=10, value=1, step=1)
 
     with c3:
-        st.subheader("3. 調整 Y 頻率")
+        st.subheader("3. 調整 Y 方向的頻率")
         ky = st.slider("ky (可當作相位編碼)", min_value=-10, max_value=10, value=0, step=1)
 
     st.write("---")
 
-    # --- K-space 點陣圖 ---
-    st.subheader(f"K-space 當前位置示意圖 (Matrix: {matrix_size}x{matrix_size})")
+    # K-space 點陣圖
+    st.subheader(f"K-space 目前位置的示意圖 (Matrix size : {matrix_size}x{matrix_size})")
 
     def plot_kspace_grid(k_x, k_y, size):
         fig, ax = plt.subplots(figsize=(6, 4))
@@ -92,19 +90,21 @@ with tab_sim:
         for spine in ax.spines.values():
             spine.set_color('white')
             
-        ax.set_title("K-space Sampling Grid (Zoomed-in View)", color='white', fontsize=12)
+        ax.set_title("K-space", color='white', fontsize=12)
         return fig
 
     st.pyplot(plot_kspace_grid(kx, ky, matrix_size))
 
     st.warning("""
     **備註：**
-    如果在手機或電腦螢幕上，真的把 128x128 (甚至 4096) 個黃色點點全部畫出來，它們會擠在一起變成一塊「實心的黃色方塊」，會完全看不出「網格」的感覺，因此僅畫到 21x21 的中心區域示意，**絕對完全並非作者本人偷懶**。
+    如果在手機或電腦螢幕上，真的把 128x128 (甚至是 4096) 個黃色點全部畫出來，
+               它們會擠在一起變成一塊「實心的黃色方塊」，會完全看不出「網格」的感覺，
+               因此僅畫到 21x21 作為示意，**絕對並非作者本人想偷懶**。
     """)
 
     st.write("---")
 
-    # --- 核心運算 ---
+    # 核心運算：產生空間圖案
     @st.cache_data 
     def generate_centered_pattern(size, k_x, k_y):
         x = np.linspace(-0.5, 0.5, size)
@@ -115,19 +115,19 @@ with tab_sim:
 
     spatial_pattern = generate_centered_pattern(matrix_size, kx, ky)
 
-    # --- 下方圖表區 ---
+    # 下方圖表區
     col_left, col_right = st.columns([1, 1])
 
     with col_left:
-        st.subheader("影像變化")
-        fig1, ax1 = plt.subplots(figsize=(6, 6))
+        st.subheader("影像變化 (亮暗條紋變化)")
+        fig1, ax1 = plt.subplots(figsize=(7, 7))
         
         im = ax1.imshow(spatial_pattern, cmap='gray', 
                         extent=[-0.5, 0.5, -0.5, 0.5], 
                         vmin=-1, vmax=1, origin='lower')
-        ax1.scatter([0], [0], color='red', marker='+', s=100, linewidth=2, label='Isocenter')
+        ax1.scatter([0], [0], color='red', marker='+', s=100, linewidth=2, label='coordinate center')
         
-        ax1.set_title(f"Image Space: (kx={kx}, ky={ky})", fontsize=12)
+        ax1.set_title(f"Image Space : (kx={kx}, ky={ky})", fontsize=12)
         ax1.set_xlabel("X Position", fontsize=10)
         ax1.set_ylabel("Y Position", fontsize=10)
         ax1.legend(loc='upper right', fontsize='small')
@@ -137,7 +137,7 @@ with tab_sim:
         st.pyplot(fig1)
         
         st.info(f"""
-        **現在是 $k_x={kx}, k_y={ky}$**
+        **說明 : 現在是 $k_x={kx}, k_y={ky}$**
         這代表在 X 方向有 **{abs(kx)}** 個週期的亮暗條紋變化，
         而 Y 方向有 **{abs(ky)}** 個週期的亮暗條紋變化。
         """)
@@ -151,10 +151,10 @@ with tab_sim:
         
         if k_magnitude == 0:
             waveform = np.ones_like(t)
-            info_text = "DC Component (Constant)"
+            info_text = "k-space 中心點訊號最強，擁有最大亮度"
         else:
             waveform = np.cos(2 * np.pi * k_magnitude * t)
-            info_text = f"Freq: {k_magnitude:.2f} cycles/FOV"
+            info_text = f"Freq 為 {k_magnitude:.2f} cycles per unit distance"
 
         ax2.plot(t, waveform, color='#1f77b4', linewidth=2)
         ax2.axvline(0, color='red', linestyle='--', alpha=0.6, label='Center')
@@ -163,41 +163,41 @@ with tab_sim:
         
         ax2.set_xlabel("Position", fontsize=10)
         ax2.set_ylabel("Amplitude", fontsize=10)
-        ax2.set_title(f"Profile: {info_text}", fontsize=12)
+        ax2.set_title(f"Profile : {info_text}", fontsize=12)
         ax2.grid(True, linestyle=':', alpha=0.6)
         ax2.legend(fontsize='small')
         st.pyplot(fig2)
         
         st.info("""
-        **為什麼波形不是斜的？**
-        這張圖顯示的是 **「訊號強度 (Amplitude)」** 的變化，而非空間幾何形狀。
-        無論左圖的條紋是直的、橫的或斜的，沿著波傳遞方向切開來看，
-        其亮暗強度的變化（由白變黑再變白）永遠呈現上下震盪的正弦波形。
+        **說明 : 為什麼相位編碼波形不是斜的？**
+        這張圖顯示的是 **「訊號強度 (Amplitude)」** 的變化，而非空間的幾何形狀。
+        無論條紋是直的、橫的或斜的，沿著波傳遞方向切開來看，
+        其強度變化（由白變黑再變白）永遠呈現上下震盪的正弦波形。
         """)
 
-# ==========================================
-# 分頁 2: 原理教學 (直接顯示，移除 expander)
-# ==========================================
+
+# 分頁 2 : 空間編碼原理
 with tab_theory:
-    st.header("📚 進階原理教學：相位編碼")
+    st.header("空間編碼原理模擬器")
     
     st.write("""
     **原理說明：**
-    這張圖模擬了 **梯度磁場 ($G_y$)** 如何讓不同位置的質子產生相位差，最終形成訊號波形。
-    1. **梯度 (Gradient)**：施加磁場梯度。
-    2. **相角 (Phase)**：質子產生不同角度的旋轉。
-    3. **投影 (Projection)**：取出垂直方向的分量（實際訊號強度）。
+    底下模擬了 **空間編碼 (梯度磁場) 如何讓不同位置的質子產生相位差，最終形成訊號波形。
+    補充 : 「相位編碼」是透過**相位差**；「頻率編碼」是透過**速度差**，來達成空間定位的目的。
+    1. **梯度 (Gradient)**：在不同位置，施加不同磁場梯度。
+    2. **相角 (Phase)**：因為不同的梯度，導致質子產生旋進頻率 (就是不同的轉速)。
+    3. **信號強度 (Projection)**：將相角投影到 Z 軸（就是相角的 Z 軸向量、投影）。
     4. **波形 (Waveform)**：將投影量連起來，就變成了 Cosine 波形！
     """)
     
-    pe_gradient = st.slider("調整相位編碼梯度強度 ($G_y$)", -5.0, 5.0, 2.0, step=0.5)
+    pe_gradient = st.slider("調整空間編碼梯度強度", -5.0, 5.0, 2.0, step=0.5)
     
-    # 設定圖表 (4層)，高度加大到 16 以容納四張圖
+    # 設定圖表 (有4層)，高度加大到 16 以容納四張圖
     fig_pe, (ax_grad, ax_spins, ax_proj, ax_wave) = plt.subplots(4, 1, figsize=(8, 16), 
                                                                  gridspec_kw={'height_ratios': [1, 1.2, 1.2, 1]})
     fig_pe.subplots_adjust(hspace=0.6) # 拉開間距
     
-    # --- 1. 第一層：梯度層 (ax_grad) ---
+    # 1. 第一層：空間編碼梯度強度層
     y_pos = np.linspace(-1, 1, 21)
     field_strength = pe_gradient * y_pos
     ax_grad.plot(y_pos, field_strength, color='lime', linewidth=1.5, alpha=0.8)
@@ -216,7 +216,7 @@ with tab_theory:
     ax_grad.tick_params(colors='white')
     ax_grad.set_ylim(-6, 6)
     
-    # --- 2. 第二層：相位角 (ax_spins) ---
+    # 2. 第二層：自旋相位角
     ax_spins.set_facecolor('black')
     ax_spins.set_xlim(-1.2, 1.2)
     ax_spins.set_ylim(-0.6, 0.6)
@@ -234,11 +234,11 @@ with tab_theory:
         # 相位指針 (藍色)
         ax_spins.arrow(center_x, center_y, dx, dy, head_width=0.0, color='cyan', width=0.008)
     
-    ax_spins.set_title("2. Spin Phase Angle (Rotating Vectors)", color='white', fontsize=12, pad=10)
-    ax_spins.set_xlabel("Position Y", color='white')
+    ax_spins.set_title("2. Spin Phase Angle", color='white', fontsize=12, pad=10)
+    ax_spins.set_xlabel("Position", color='white')
     ax_spins.tick_params(axis='x', colors='white')
 
-    # --- 3. 第三層：信號投影量 (ax_proj) ---
+    # 3. 第三層：信號強度投影量
     ax_proj.set_facecolor('black')
     ax_proj.set_xlim(-1.2, 1.2)
     ax_proj.set_ylim(-0.6, 0.6)
@@ -257,11 +257,11 @@ with tab_theory:
         # 畫垂直箭頭 (黃色) - 稍微加長加細
         ax_proj.arrow(center_x, center_y, 0, proj_dy, head_width=0.0, color='yellow', width=0.005)
 
-    ax_proj.set_title("3. Signal Intensity (Vertical Projection)", color='white', fontsize=12, pad=10)
-    ax_proj.set_xlabel("Position Y", color='white')
+    ax_proj.set_title("3. Signal Intensity", color='white', fontsize=12, pad=10)
+    ax_proj.set_xlabel("Position", color='white')
     ax_proj.tick_params(axis='x', colors='white')
 
-    # --- 4. 第四層：Cosine 波形 (ax_wave) ---
+    # 4. 第四層：Cosine 波形
     y_smooth = np.linspace(-1, 1, 300)
     phase_smooth = -pe_gradient * y_smooth * np.pi
     wave_smooth = np.cos(phase_smooth)
@@ -274,7 +274,7 @@ with tab_theory:
     
     ax_wave.set_title("4. Resulting Waveform (Cosine)", color='white', fontsize=12, pad=10)
     ax_wave.set_ylabel("Intensity", color='white')
-    ax_wave.set_xlabel("Position Y", color='white')
+    ax_wave.set_xlabel("Position", color='white')
     ax_wave.tick_params(colors='white')
     ax_wave.set_ylim(-1.2, 1.2)
 
