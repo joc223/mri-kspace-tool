@@ -50,11 +50,11 @@ with tab_sim:
         )
 
     with c2:
-        st.subheader("2. 調整 X 方向的頻率")
+        st.subheader("2. 調整 X 方向頻率")
         kx = st.slider("kx (可當作頻率編碼)", min_value=-10, max_value=10, value=1, step=1)
 
     with c3:
-        st.subheader("3. 調整 Y 方向的頻率")
+        st.subheader("3. 調整 Y 方向頻率")
         ky = st.slider("ky (可當作相位編碼)", min_value=-10, max_value=10, value=0, step=1)
 
     st.write("---")
