@@ -60,7 +60,7 @@ with tab_sim:
     st.write("---")
 
     # K-space 點陣圖
-    st.subheader(f"K-space 目前位置的示意圖 (Matrix size : {matrix_size}x{matrix_size})")
+    st.subheader(f"K-space 目前的位置 (Matrix size : {matrix_size}x{matrix_size})")
 
     def plot_kspace_grid(k_x, k_y, size):
         fig, ax = plt.subplots(figsize=(6, 4))
@@ -154,7 +154,7 @@ with tab_sim:
             info_text = "k-space 中心點訊號最強，擁有最大亮度"
         else:
             waveform = np.cos(2 * np.pi * k_magnitude * t)
-            info_text = f"Freq 為 {k_magnitude:.2f} cycles per unit distance"
+            info_text = f"Freq = {k_magnitude:.2f} cycles per unit distance"
 
         ax2.plot(t, waveform, color='#1f77b4', linewidth=2)
         ax2.axvline(0, color='red', linestyle='--', alpha=0.6, label='Center')
