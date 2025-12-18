@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 1. 網頁基本設定
-st.set_page_config(page_title="MRI K-space Simulator")
+st.set_page_config(page_title="MRI K-space Simulator") # 設定網頁標題與圖示
 
 # 2. CSS 樣式設定
 hide_all_style = """
@@ -23,10 +23,9 @@ hide_all_style = """
 """
 st.markdown(hide_all_style, unsafe_allow_html=True)
 
-# 3. 主標題
-st.title("MRI K-space 原理模擬器")
+st.title("MRI K-space 原理模擬器") # 主標題
 
-tab_sim, tab_theory = st.tabs(["K-space 模擬器", "空間編碼原理"]) 
+tab_sim, tab_theory = st.tabs(["K-space 模擬器", "空間編碼原理"]) # 建立兩個分頁：模擬器與原理教學
 
 
 # 分頁 1 : K-space、亮暗條紋變化、波形
@@ -38,6 +37,7 @@ with tab_sim:
     """)
     st.write("---")
 
+    # 參數控制區
     c1, c2, c3 = st.columns([1, 1, 1])
 
     with c1:
@@ -66,8 +66,8 @@ with tab_sim:
         
         grid_x, grid_y = np.meshgrid(np.arange(-display_limit, display_limit+1), 
                                      np.arange(-display_limit, display_limit+1))
-        
-        ax.scatter(grid_x, grid_y, c='yellow', s=80, edgecolors='gray', alpha=0.5, label='Grid')
+         
+        ax.scatter(grid_x, grid_y, c='yellow', s=80, edgecolors='gray', alpha=0.5, label='Grid') # 畫出背景的黃色網格點
         
         ax.axhline(0, color='white', linewidth=1)
         ax.axvline(0, color='white', linewidth=1)
@@ -77,7 +77,7 @@ with tab_sim:
             ax.annotate(f'({k_x}, {k_y})', xy=(k_x, k_y), xytext=(k_x+1, k_y+1),
                         color='white', fontsize=10,
                         arrowprops=dict(facecolor='white', shrink=0.05))
-
+        
         ax.set_facecolor('black')
         fig.patch.set_facecolor('black')
         ax.set_xlabel('kx (Frequency)', color='white', fontsize=10)
@@ -92,7 +92,7 @@ with tab_sim:
         ax.set_title("K-space", color='white', fontsize=12)
         return fig
 
-    st.pyplot(plot_kspace_grid(kx, ky, matrix_size))
+    st.pyplot(plot_kspace_grid(kx, ky, matrix_size)) # 顯示 K-space 圖
 
     st.warning("""
     **備註：**
@@ -110,8 +110,8 @@ with tab_sim:
         X, Y = np.meshgrid(x, y)
         pattern = np.cos(2 * np.pi * (k_x * X + k_y * Y))
         return pattern
-
-    spatial_pattern = generate_centered_pattern(matrix_size, kx, ky)
+ 
+    spatial_pattern = generate_centered_pattern(matrix_size, kx, ky) # 執行運算
 
     col_left, col_right = st.columns([1, 1])
 
@@ -172,6 +172,7 @@ with tab_sim:
         其強度變化永遠呈現上下震盪的正弦波形。
         """)
 
+
 # 分頁 2 : 空間編碼原理
 with tab_theory:
     st.header("空間編碼原理模擬器")
@@ -187,12 +188,13 @@ with tab_theory:
     4. **波形 (Waveform)**：將投影量連起來，就變成了 Cosine 波形！
     """)
     
-    pe_gradient = st.slider("調整空間編碼梯度強度", -5.0, 5.0, 2.0, step=0.5)
+    pe_gradient = st.slider("調整空間編碼梯度強度", -5.0, 5.0, 2.0, step=0.5) # 梯度強度滑桿
     
     fig_pe, (ax_grad, ax_spins, ax_proj, ax_wave) = plt.subplots(4, 1, figsize=(8, 16), 
                                                                  gridspec_kw={'height_ratios': [1, 1.2, 1.2, 1]})
-    fig_pe.subplots_adjust(hspace=0.6) 
+    fig_pe.subplots_adjust(hspace=0.6) # 拉開子圖間距
     
+    # 1. 第一層：空間編碼梯度強度層
     y_pos = np.linspace(-1, 1, 21)
     field_strength = pe_gradient * y_pos
     
@@ -211,11 +213,12 @@ with tab_theory:
     ax_grad.tick_params(colors='white')
     ax_grad.set_ylim(-6, 6)
     
+    # 2. 第二層：自旋相位角層
     ax_spins.set_facecolor('black')
     ax_spins.set_xlim(-1.2, 1.2)
     ax_spins.set_ylim(-0.6, 0.6)
     ax_spins.axis('on')
-    ax_spins.set_yticks([]) 
+    ax_spins.set_yticks([])
     for spine in ax_spins.spines.values(): spine.set_color('white')
 
     phase_angles = -pe_gradient * y_pos * np.pi 
@@ -231,6 +234,7 @@ with tab_theory:
     ax_spins.set_xlabel("Position", color='white')
     ax_spins.tick_params(axis='x', colors='white')
 
+    # 3. 第三層：信號強度投影量
     ax_proj.set_facecolor('black')
     ax_proj.set_xlim(-1.2, 1.2)
     ax_proj.set_ylim(-0.6, 0.6)
@@ -242,23 +246,24 @@ with tab_theory:
         center_x = y; center_y = 0
         circle = plt.Circle((center_x, center_y), 0.04, color='gray', fill=False)
         ax_proj.add_artist(circle)
-        
-        proj_dy = 0.04 * np.cos(phase_angles[i])
-        
-        ax_proj.arrow(center_x, center_y, 0, proj_dy, head_width=0.0, color='yellow', width=0.005)
+       
+        proj_dy = 0.04 * np.cos(phase_angles[i]) # 計算垂直投影分量 (Cosine 值)
+          
+        ax_proj.arrow(center_x, center_y, 0, proj_dy, head_width=0.0, color='yellow', width=0.005) # 畫垂直箭頭 (黃色)，代表訊號強度
 
     ax_proj.set_title("3. Signal Intensity", color='white', fontsize=12, pad=10)
     ax_proj.set_xlabel("Position", color='white')
     ax_proj.tick_params(axis='x', colors='white')
 
-    y_smooth = np.linspace(-1, 1, 300)
+    # 4. 第四層：Cosine 波形
+    y_smooth = np.linspace(-1, 1, 300) # 使用更多點數 (300點) 讓波形平滑
     phase_smooth = -pe_gradient * y_smooth * np.pi
     wave_smooth = np.cos(phase_smooth)
     
     ax_wave.set_facecolor('black')
-    ax_wave.plot(y_smooth, wave_smooth, color='yellow', linewidth=2)
-    ax_wave.fill_between(y_smooth, wave_smooth, color='yellow', alpha=0.3)
-
+    ax_wave.plot(y_smooth, wave_smooth, color='yellow', linewidth=2) # 畫出黃色連續波形
+    ax_wave.fill_between(y_smooth, wave_smooth, color='yellow', alpha=0.3) # 填色增加視覺效果
+    
     ax_wave.set_title("4. Resulting Waveform (Cosine)", color='white', fontsize=12, pad=10)
     ax_wave.set_ylabel("Intensity", color='white')
     ax_wave.set_xlabel("Position", color='white')
